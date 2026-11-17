@@ -1,0 +1,30 @@
+---
+pagetitle: "Data Journalism: JOUR472/JOUR772"
+toc: false
+page-navigation: false
+body-classes: home
+---
+
+::: {.title-hero}
+[JOUR472/JOUR772]{.course-number}
+
+[Data Journalism]{.course-title}
+
+[Derek Willis]{.instructor}
+
+[Philip Merrill College of Journalism, University of Maryland]{.affiliation}
+:::
+
+Code, data and visuals for storytellers. This site holds the readings for JOUR472 and JOUR772, which teach how to find, clean, analyze and visualize data for journalism using R and the Tidyverse.
+
+[Start with the introduction](introduction.qmd){.btn .btn-primary .btn-lg role="button"}
+
+## What the course covers
+
+- **[Getting started](start-story.qmd):** reading stories for their data, newsroom math and what counts as data.
+- **[Spreadsheets](xl-intro.qmd):** sorting, filtering and formulas in Google Sheets.
+- **[Reporting foundations](ethics.qmd):** ethics, public records and GitHub.
+- **[R fundamentals](r-basics.qmd):** replication, aggregates, filters, dates and mutating.
+- **[Cleaning and combining data](data-cleaning-part-i.qmd):** data smells, janitor, OpenRefine, PDFs, joins and the Census API.
+- **[Visualization and maps](visualizing-for-reporting.qmd):** charts for reporting and publication, and geographic analysis.
+- **[Advanced topics](textanalysis.qmd):** text analysis, scraping, statistics, AI and writing with data.
