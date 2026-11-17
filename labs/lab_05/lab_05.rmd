@@ -1,7 +1,7 @@
 ---
 title: "lab_05"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -25,7 +25,7 @@ options(scipen=999)
 
 ## Get Our PDF
 
-We'll be working with the [911 overdose calls from Baltimore County](https://drive.google.com/file/d/1qkYuojGF_6WKFr5aNQxmewDzcKyOiJFr/view?usp=share_link). You'll want to download it to a place you'll remember (like your Downloads folder, or the labs folder in your repository). The goal is to extract the tables within it, export that to a CSV file, load it into RStudio and ask some questions.
+We'll be working with a log of 911 overdose calls from Baltimore County in 2022, which the county released as a 112-page PDF in response to a public records request. It's in your lab_05/data folder as `baltimore_county_od_log.pdf`. The goal is to extract the table within it, export that to a CSV file, load it into RStudio and ask some questions. Overdose calls are one of the few near-real-time measures of the overdose crisis; death data from the state can take a year or more to be finalized.
 
 ## Extract Data from PDF Using Tabula
 
@@ -33,7 +33,7 @@ Start Tabula, then go to <http://127.0.0.1:8080/> in your browser. Click the "Br
 
 This PDF has a single table spread over multiple pages to extract. We're going to make a single dataframe from this table, exporting it to a CSV file that you will load into R. In Tabula, highlight the table and click the "Preview & Export Extracted Data" button. You may want to play with including or excluding the column headers - YOU SHOULD HAVE FIVE COLUMNS OF DATA.
 
-Save the CSV (it should be called `tabula-Baltimore County; Carey, Samantha log OD.csv` by default) to your lab_05/data folder.
+Save the CSV (it should be called `tabula-baltimore_county_od_log.csv` by default) to your lab_05/data folder.
 
 From there, you will need to read in the data, and add or fix headers if necessary. You can choose to include the headers from the PDF in your exported CSV files OR to exclude them and add them when importing. `read_csv` allows us to do this ([and more](https://readr.tidyverse.org/reference/read_delim.html)).
 

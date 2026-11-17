@@ -79,6 +79,16 @@ So at 3 a.m., after two hours of pulling our hair out, we figured out how to syn
 
 While the Pick the Perp example is an easy one—it’s never cool to hotlink an image—it does raise an issue to consider. Because you are thinking carefully about how to build your app the right way doesn’t mean someone else will. And it doesn’t mean they won’t just go take your data from your site. So how could you deal with that? Make the data available as a download? Create an API that uses your same ethical constructs? Terms of service? All have pros and cons and are worth talking about before going forward.
 
+## Health Data Is Different
+
+Most of the data in this book is about health, and health information carries extra weight. A diagnosis, an overdose, a prescription or a child's vaccination status can follow a person for the rest of their life. A few things to keep in mind:
+
+-   **Laws protect some health data, but not all of it.** The federal privacy law known as HIPAA limits what hospitals, doctors and insurers can disclose about patients. It does not apply to journalists, and it doesn't cover a lot of health information held by other agencies -- like 911 call logs or court records. Just because you *can* get or publish something doesn't mean you should.
+-   **Small numbers can identify people.** When an agency reports that one person in a small county died of an overdose last year, people in that county may know exactly who it was. That's why agencies suppress small counts -- you'll see blanks, asterisks and values like -999 in the data in this book -- and why you should think twice before publishing small numbers or combining datasets in ways that could reveal someone's identity. Medicare, for example, leaves out any prescriber with fewer than 11 claims.
+-   **Addresses are sensitive.** A 911 overdose call includes an address, and that address is someone's home. Mapping individual addresses is very different from mapping rates by zip code or county.
+-   **Words matter.** Describing people as "addicts" or "anti-vaxxers" can stigmatize them and the communities you're writing about. The AP Stylebook and health reporting organizations such as the Association of Health Care Journalists have guidance on language.
+-   **Data about professionals is different from data about patients.** Payments from drug companies to doctors, disciplinary actions against nurses and inspection results for nursing homes are records of public accountability. They are exactly the kind of data journalists should be publishing -- carefully and accurately.
+
 ## Ethical Data
 
 We live in marvelous times. The web offers you no end of tools to make things on the web, to put data from here on there, to make information freely available. But, we’re an optimistic lot. Developers want to believe that their software is being used only for good. And most people will use it for good. But, there are times where the data you’re working with makes people uncomfortable. Indeed, much of journalism is about making people uncomfortable, publishing things that make people angry, or expose people who don’t want to be exposed.

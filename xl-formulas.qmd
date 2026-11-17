@@ -2,10 +2,10 @@
 title: "Formulas in Google Sheets"
 ---
 
-The quick review of math in Google Sheets uses the City of Phoenix's budgeted spending for the 2018 fiscal year, compared with previous years.
+The quick review of math in Google Sheets uses the Maryland Department of Health's count of drug- and alcohol-related intoxication deaths by substance for 2014 through 2016, the years when fentanyl began driving the state's overdose crisis.
 
 ::: {.alert .alert-info .opacity-2}
-Make a copy of the [data file](https://docs.google.com/spreadsheets/d/1NGFHiJzvSsdB2wT7AehdSCjGrrwrOS1_rLk5FEaz7a8/edit?usp=sharing) to follow along
+Import [`md_intoxication_deaths_2014_2016.csv`](data/md_intoxication_deaths_2014_2016.csv) from the `data` folder of the course repository into a new Google Sheet (type sheet.new in your browser, then use File -> Import) to follow along. It comes from two datasets on [Maryland's open data portal](https://opendata.maryland.gov/). The screenshots in this chapter come from an earlier version that used a city budget, so they'll look different from your sheet, but the formulas work the same way.
 :::
 
 You should get into the habit of creating unique identifiers, checking your corners and looking for documentation before you ever start working with a spreadsheet. These habits were covered in [Data journalism in the age of replication](replication.html) and on [a Google Sheets refresher](xl-refresher.html).
@@ -39,13 +39,13 @@ You'll usually use them on a single column at a time.
 
 ...where "start" means the first cell you want to include, and finish means the last cell. Use the cell address of the first number you want to include , a colon, then the cell address of the last number you want to include. You can also select them while you're editing the formula.
 
-Here's an example of adding up all of the rows in a list by county:
+Here's an example of adding up all of the rows in a list:
 
 ![formula](images/xl_mathreview_00A.png)
 
 ## Common spreadsheet arithmetic
 
-The budget document shows three years' of data: The actual spending in the fiscal year that ended in 2016; the spending that was estimated for the end of fiscal year 2017; and the proposed spending for fiscal year 2018. The first page of the document shows these amounts for broad spending categories.
+The data shows three years' worth of deaths in which each of six substances was involved: heroin, fentanyl, alcohol, cocaine, prescription opioids and benzodiazepines (sedatives such as Xanax and Valium). The last row is the state's total number of accidental or undetermined intoxication deaths for each year.
 
 You may want to widen the columns and format the numbers before you start:
 
@@ -53,13 +53,13 @@ You may want to widen the columns and format the numbers before you start:
 ![](images/xl_mathreview_01.gif){width="100%"}
 :::
 
-### Check the government's math with SUM
+### Check the math with SUM
 
-Our first job is to make sure the government has provided us data that adds up. To do that, we'll SUM all of the departments' spending.
+Our first job is to see whether the data adds up the way we'd expect. To do that, we'll SUM the deaths for all of the substances.
 
-To add up the numbers from 2016, enter the following formula in cell C11, just below the number provided by the government:
+To add up the numbers from 2014, enter the following formula in cell B10, a couple of rows below the total provided by the state:
 
-      =SUM(C2:C8)
+      =SUM(B2:B7)
       and hit the enter key
 
 Copy that formula to the right. Notice how the formula changes the addresses that it is using as you move to the right -- it's adjusted them to refer to the current column.
@@ -68,27 +68,27 @@ Copy that formula to the right. Notice how the formula changes the addresses tha
 ![](images/xl_mathreview_02.gif){width="100%"}
 :::
 
-What's wrong? The numbers for the budget 2018 don't add up. (Hint: look at the page called "notes" for an explanation.)
+What's wrong? The substances add up to far more than the total -- in 2016, nearly twice as much. Is the state's total wrong? No. Many people who die of an overdose have more than one drug in their system -- heroin *and* fentanyl, or cocaine *and* alcohol -- and the health department counts that death once for each substance involved. The total counts each person once. This is a good example of why you should always read the documentation before you add things up: the right answer to "how many people died?" is the total, not the sum.
 
-### Change in spending
+### Change in deaths
 
-The increase or decrease in projected spending from 2017 to 2018 is just the difference between the two values, beginning in cell F3
+The increase or decrease in deaths from 2015 to 2016 is just the difference between the two values, beginning in cell E2
 
-      new-old, or  =E2-D2
+      new-old, or  =D2-C2
 
-When you copy it down, note how the references to each row also adjusted. In line 3, it's E3-D3, and so on. Excel and other spreadsheets assume that, most of the time, you want these kinds of adjustments to be made.
+When you copy it down, note how the references to each row also adjusted. In line 3, it's D3-C3, and so on. Excel and other spreadsheets assume that, most of the time, you want these kinds of adjustments to be made.
 
 ![](images/xl_mathreview_03.gif){width="100%"}
 
 ### Percent change
 
-We can't tell the *rate* of growth for each department until we calculate the percent change from one year to another. Now that we already have the change, the percent change is easy. The formula is:
+We can't tell the *rate* of growth for each substance until we calculate the percent change from one year to another. Now that we already have the change, the percent change is easy. The formula is:
 
       ( new - old ) / old
 
       .. or just scream "NOO"
 
-The new-old is already in column F, so all that's left is to divide again. In grade school, you also had to move the decimal place over two spots, since the concept of percent change is "out of 100". Excel formats will do that for you.
+The new-old is already in column E, so all that's left is to divide again: =E2/C2 in column F. In grade school, you also had to move the decimal place over two spots, since the concept of percent change is "out of 100". Excel formats will do that for you.
 
 Remember, it's always (new-old)/old , **NOT** the big one minus the little one. Doing it correctly, the answer could be negative, meaning the value fell.
 
@@ -100,13 +100,13 @@ When you're done, you can format the answer as a percentage to get it into whole
 
 Until you get used to it, there's no harm in doing these calculations step by step. Excel won't complain if you have extra columns. You can always hide them.
 
-It's also worth comparing the picture you get by looking at raw numbers vs. percentages. In our case, the budget for public safety is expected to rise by a whopping \$102 million, but it's a smaller percentage increase than other, smaller departments.
+It's also worth comparing the picture you get by looking at raw numbers vs. percentages. In our case, heroin deaths rose by 464 from 2015 to 2016, which sounds enormous -- but fentanyl deaths rose by 779, more than tripling. That's a percent change of nearly 230%, by far the largest of any substance, and it's why fentanyl became the story of Maryland's overdose crisis.
 
 ### Parts of a whole: percent of total
 
-We'd also like to know what portion of the total spending is eaten up by each department. To do that, we need the percent of total.
+We'd also like to know what portion of all deaths involved each substance. To do that, we need the percent of total.
 
-In our case, let's use the total that the government gave us. In practice, you'd have to decide what to do if your figures didn't match those provided by officials. You can't assume that the total is wrong -- you could be missing a category, or there could be a mistake in one of the line items.
+In our case, let's use the total that the state gave us -- the number of people who died, not the sum of the substances. In practice, you'd have to decide what to do if your figures didn't match those provided by officials. You can't assume that the total is wrong -- you could be missing a category, or, as here, the categories could overlap. Because they overlap, our percentages will add up to more than 100%, and you'd write that "fentanyl was involved in 54% of deaths," not that it "caused" them.
 
 The formula for percent of total is:
 
@@ -122,7 +122,7 @@ But you have a problem: You either have to type in each row, or you get somethin
 
 Excel has done its magic, adjusting the location of both the numerator and the denominator when you copied. You don't have to type in each formula one by one, though. Instead, you'll use anchors, known in spreadsheets as "absolute references". Think of a dollar sign as an anchor or stickpin, holding down the location of part of your formula. If you put the stickpin before the letter in the formula, it holds the column in place. If you put it before the number, it holds the row in place. If you put it in both places, it holds the cell in place.
 
-So our new formula for the percent of total is:
+So our new formula for the percent of total for 2016, starting in row 2, is `=D2/D$8` -- the dollar sign holds the total in row 8 in place as you copy the formula down. Here is how that looks in a sheet:
 
 ::: col-12
 ![E2/E\$10](images/xl_mathreview_06.png){width="100%"}
@@ -130,7 +130,7 @@ So our new formula for the percent of total is:
 
 ## While we're at it: two kinds of averages
 
-Although it doesn't make a lot of sense in this context, we'll go ahead and calculate the *average* or *mean* size of each department, and then calculate the *median* size.
+Although it doesn't make a lot of sense in this context, we'll go ahead and calculate the *average* or *mean* number of deaths per substance, and then calculate the *median*.
 
 **Simple average, or mean**
 
@@ -140,13 +140,13 @@ A simple average, also known as the mean, is skewed toward very high or very low
 
 But in Excel, all we need is the word AVERAGE:
 
-        =AVERAGE(C2:C9)
+        =AVERAGE(D2:D7)
 
 **Median**
 
 In Excel, you can get the median of a list of numbers by just using the formula, MEDIAN()
 
-      = MEDIAN(C2:C9)
+      = MEDIAN(D2:D7)
 
 ## The final spreadsheet
 
@@ -154,7 +154,7 @@ In Excel, you can get the median of a list of numbers by just using the formula,
 ![final worksheet](images/xl_mathreview_07.png){width="100%"}
 :::
 
-Doing simple calclutions like this on data that is provided to you by the government lets you ask better questions when you get an interview, and may even convince officials to talk with you. There's a big difference between asking them to tell you what the budget numbers are, and asking them to explain specific results!
+Doing simple calculations like this on data that is provided to you by the government lets you ask better questions when you get an interview, and may even convince officials to talk with you. There's a big difference between asking them to tell you what the overdose numbers are, and asking them to explain specific results!
 
 ## FAQs
 
@@ -164,7 +164,7 @@ Make sure your formula is locked in by either hitting "Enter" or "Escape". This 
 
 #### Should I use average or median? {.unnumbered}
 
-It depends. Averages are easier to explain but can be misleading. Usually, if they're very different, median will be a better representation of the typical person, city or department. Averages in these cases are more like totals.
+It depends. Averages are easier to explain but can be misleading. Usually, if they're very different, median will be a better representation of the typical person, city or category. Averages in these cases are more like totals.
 
 #### My percents are small numbers with decimal points {.unnumbered}
 

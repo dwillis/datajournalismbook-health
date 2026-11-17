@@ -30,9 +30,9 @@ library(lubridate)
 library(janitor)
 ```
 
-For this example, we're going to work on loading a simple table of press releases from the Maryland State Courts.
+For this example, we're going to work on loading a simple table of disciplinary actions from the Maryland Board of Physicians, the state agency that licenses doctors and other health care providers. When the board suspends or revokes a license, or reprimands someone, it posts the action online.
 
-Let's suppose we can't find a table like that for download, but we do see a version on the website at this URL: <https://www.courts.state.md.us/media/news>.
+Let's suppose we can't find a table like that for download, but we do see a version on the website at this URL: <https://www.mbp.state.md.us/disciplinary_2024.aspx>.
 
 ```{r, echo=FALSE}
 knitr::include_graphics(rep("images/rvest1.png"))
@@ -40,34 +40,34 @@ knitr::include_graphics(rep("images/rvest1.png"))
 
 We could get this table into R with the following manual steps: highlighting the text, copying it into Excel, saving it as a csv, and reading it into R. Or, we could write a few lines of webscraping code to have R do that for us!
 
-In this simple example, it's probably faster to do it manually than have R do it for us. But during the time when ballots are being counted, this table is likely to change, and we don't want to keep doing manual repetitive tasks.
+In this simple example, it's probably faster to do it manually than have R do it for us. But the board adds new actions throughout the year, and we don't want to keep doing manual repetitive tasks.
 
 Why would we ever write code to grab a single table? There's several reasons:
 
 1.  Our methods are transparent. If a colleague wants to run our code from scratch to factcheck our work, they don't need to repeat the manual steps, which are harder to document than writing code.
 2.  Let's suppose we wanted to grab the same table every day, to monitor for changes. Writing a script once, and pressing a single button every day is going to be much more efficient than doing this manually every day.
 3.  If we're doing it manually, we're more likely to make a mistake, like maybe failing to copy every row from the whole table.
-4.  It's good practice to prepare us to do more complex scraping jobs. As we'll see in the next chapter, if we ever want to grab the same table from hundreds of pages, writing code is much faster and easier than going to a hundred different pages ourselves and downloading data.
+4.  It's good practice to prepare us to do more complex scraping jobs. As we'll see in the next chapter, if we ever want to grab the same table from hundreds of pages, writing code is much faster and easier than going to a hundred different pages ourselves and downloading data. The board has a page like this one for every year, for example.
 
-So, to scrape, the first thing we need to do is start with the URL. Let's store it as an object called ag_url.
+So, to scrape, the first thing we need to do is start with the URL. Let's store it as an object called mbp_url.
 
 ```{r}
-courts_url <- "https://www.courts.state.md.us/media/news"
+mbp_url <- "https://www.mbp.state.md.us/disciplinary_2024.aspx"
 ```
 
 When we go to the web page, we can see a nicely-designed page that contains our information.
 
 But what we really care about, for our purposes, is the html code that creates that page.
 
-In our web browser, if we right-click anywhere on the page and select "view source" from the popup menu, we can see the source code. Or you can just copy this into Google Chrome: view-source:https://www.courts.state.md.us/media/news.
+In our web browser, if we right-click anywhere on the page and select "view source" from the popup menu, we can see the source code. Or you can just copy this into Google Chrome: view-source:https://www.mbp.state.md.us/disciplinary_2024.aspx.
 
-Here's a picture of what some of the source code looks like.
+Here's a picture of what some of the source code for the table looks like.
 
 ```{r, echo=FALSE}
 knitr::include_graphics("images/rvest2.png")
 ```
 
-We'll use those HTML tags -- things like `<table>` and `<tr>` -- to grab the info we need.
+We'll use those HTML tags -- things like `<table>` and `<tr>` -- to grab the info we need. Notice something else in there, too: after each name, there's a `<span>` with the class "visually-hidden" that says "(opens in a new tab)". You don't see that text on the page, but people who use screen readers hear it. Our scraper will see it, too, so we'll have to deal with it.
 
 Okay, step 1.
 
@@ -75,7 +75,7 @@ Let's write a bit of code to tell R to go to the URL for the page and ingest all
 
 ```{r}
 # read in the html
-results <- courts_url |>
+results <- mbp_url |>
   read_html()
 
 # display the html below
@@ -99,17 +99,13 @@ But which part do we need from that mess of html code? To figure that out, we ca
 
 On the page, find the data we want to grab and right click on the word "Date" in the column header of the table. That will bring up a dropdown menu. Select "Inspect", which will pop up a window called the "element inspector" that shows us where different elements on the page are located, what html tags created those elements, and other info.
 
-```{r, echo=FALSE}
-knitr::include_graphics("images/rvest4.png")
-```
-
-The table that we want is actually contained inside an html `<table>`. It has a `<tbody>` that contains one row `<tr>` per release.
+The table that we want is actually contained inside an html `<table>`. It has a `<tbody>` that contains one row `<tr>` per disciplinary action.
 
 Because it's inside of a table, and not some other kind of element (like a `<div>`), rvest has a special function for easily extracting and converting html tables, called html_table(). This function extracts all the html tables on the page, but this page only has one so we're good.
 
 ```{r}
 # read in the html and extract all the tables
-results <- courts_url |>
+results <- mbp_url |>
   read_html() |>
   html_table()
 
@@ -118,15 +114,15 @@ results <- courts_url |>
 results
 ```
 
-In the environment window at right, look at results Note that it's now a "list of 11".
+In the environment window at right, look at results. Note that it's a "list of 1".
 
-This gets a little complicated, but what you're seeing here is a nested list that contains one data frame -- also called tibbles -- one for each table that exists on the web page we scraped. There are tables for each year on the page, so we have 11 years' worth of press releases.
+This gets a little complicated, but what you're seeing here is a nested list that contains one data frame -- also called tibbles -- one for each table that exists on the web page we scraped. This page only has one table, but many pages have several, and `html_table()` always gives you a list.
 
-Let's say we are interested in 2023, so all we need to do now is to store that first dataframe as an object. We can do that with this code, which says "keep only the first dataframe from our nested list."
+So all we need to do now is to store that first dataframe as an object. We can do that with this code, which says "keep only the first dataframe from our nested list."
 
 ```{r}
 # Read in all html from table, store all tables on page as nested list of dataframes.
-results <- courts_url |>
+results <- mbp_url |>
   read_html() |>
   html_table()
 
@@ -139,35 +135,37 @@ results <- results[[1]]
 results
 ```
 
-We now have a proper dataframe, albeit with some lengthy column headers.
+We now have a proper dataframe. And there's that "(opens in a new tab)" text at the end of every name.
 
-From here, we can do a little cleaning. First we'll use clean_names() to lower the column names. Then use rename() to replace the title column with a simpler version and properly format the date.
+From here, we can do a little cleaning. First we'll use clean_names() to lower the column names. Then we'll use str_remove() to get rid of the hidden text in the name column, str_squish() to remove the extra spaces it leaves behind, and properly format the date.
 
 ```{r}
 # Read in all html from table, get the HTML table.
-results <- courts_url |>
+results <- mbp_url |>
   read_html() |>
   html_table()
 
-# Standardize column headers, remove last row
+# Standardize column headers, clean up the names and dates
 
 results <- results[[1]] |>
   clean_names() |>
-  rename(title = news_release_news_item) |>
+  mutate(name = str_squish(str_remove(name, "\\(opens in a new tab\\)"))) |>
   mutate(date = mdy(date))
 
 # show the dataframe
 results
 ```
 
-And there we go. We now have a nice tidy dataframe of Maryland state court press releases. We could combine all 11 dataframes if we wanted to have the whole set.
+Why the two backslashes before each parenthesis? Like periods, parentheses have a special meaning in the patterns that str_remove() uses, so we have to tell R that we mean a literal parenthesis.
+
+And there we go. We now have a nice tidy dataframe of Maryland physician disciplinary actions. Look closely, though, and you'll see that the same person can appear more than once -- a summary suspension, for example, is often followed by a separate action affirming it -- and that names aren't always written the same way. "M.D." in one row, "MD" in another. That's the kind of thing you'd need to account for before counting how many people the board disciplined.
 
 What about HTML that doesn't have a table? Well, that's where things get a bit more complicated, and rely on your ability to read HTML and identify particular elements of it.
 
-Let's consider the list of press releases from the little-known but fascinating Office of the State Prosecutor: https://osp.maryland.gov/press-releases/. Let's save that URL as a variable as we did above:
+Let's consider the list of press announcements from the U.S. Food and Drug Administration: https://www.fda.gov/news-events/fda-newsroom/press-announcements. Let's save that URL as a variable as we did above:
 
 ```{r}
-osp_url <- "https://osp.maryland.gov/press-releases/"
+fda_url <- "https://www.fda.gov/news-events/fda-newsroom/press-announcements"
 ```
 
 The next step is similar to before, too, except this time we're not going to call `html_table()` because there are no tables here that we want. In order to find what we want, we'll need to right-click on the first release date and choose "Inspect".
@@ -175,64 +173,52 @@ The next step is similar to before, too, except this time we're not going to cal
 One reason that we use HTML elements like ul and li is to help organize the code and make it easier to maintain. But it also helps with scraping, because we can zero in on the elements we want. Let's start by reading it in:
 
 ```{r}
-osp_results <- osp_url |>
+fda_results <- fda_url |>
   read_html()
 
 # show the result
-osp_results
+fda_results
 ```
 
 Once again we get a list of two as our result. In this case, we don't want to isolate the first item in our list. Instead, we want to try to locate all of the `li` tags inside this HTML. Since the `li` tag is an HTML element, we use the function `html_elements()` to get them. If we only wanted a single element, we'd use `html_element()`:
 
 ```{r}
-osp_results |> html_elements('li')
+fda_results |> html_elements('li')
 ```
 
-Good news and bad news here: we have all of the
-
-<li>
-
-tags, but we have lots of them, and it's hard to see if we have the right ones. Let's see what we're dealing with and just look at the text *inside* the
-
-<li>
-
-tags. To do that, we add `html_text()` to the end of the last code block:
+Good news and bad news here: we have all of the `<li>` tags, but we have lots of them -- the FDA's site uses them for menus and links all over the page -- and it's hard to see if we have the right ones. Let's see what we're dealing with and just look at the text *inside* the `<li>` tags. To do that, we add `html_text()` to the end of the last code block:
 
 ```{r}
-osp_results |> html_elements('li') |> html_text()
+fda_results |> html_elements('li') |> html_text()
 ```
 
-Ok, so now we can see the press releases. But they are surrounded by a bunch of things we don't want, and this *still* isn't a dataframe. Let's solve the second problem first with the `as_tibble()` function:
+Ok, so now we can see the press announcements. But they are surrounded by a bunch of things we don't want, and this *still* isn't a dataframe. Let's solve the second problem first with the `as_tibble()` function:
 
 ```{r}
-releases <- osp_results |> html_elements('li') |> html_text() |> as_tibble()
+announcements <- fda_results |> html_elements('li') |> html_text() |> as_tibble()
 ```
 
-Now we're getting closer. The press releases have a specific HTML class tied to the
-
-<li>
-
-tag - in this case "listing-item". We can isolate those:
+Now we're getting closer. If you inspect one of the announcements, you'll see that the `<li>` tags we want are inside a `<div>` tag with the class "item-list". We can isolate those by telling `html_elements()` to look for `li` tags inside of `div` tags with that class -- the period means "class":
 
 ```{r}
-releases <- osp_results |> html_elements('li.listing-item') |> html_text() |> as_tibble()
+announcements <- fda_results |> html_elements('div.item-list li') |> html_text() |> as_tibble()
 ```
 
 Ok, this is *better*, but it's still not great. We have at least two issues:
 
 1.  The column is called `value`
-2.  The column has two kinds of information in it: a date and the title.
+2.  The column has two kinds of information in it: a date and the title, separated by a hyphen.
 
-Let's solve both of those using the `separate()` function, which does what you think it does and gives us a chance to rename the columns:
+Let's solve both of those using the `separate()` function, which does what you think it does and gives us a chance to rename the columns. We'll split on a hyphen with a space on either side, and use `extra = "merge"` so that if a title has its own hyphen, the rest of the title stays together instead of being cut off:
 
 ```{r}
-releases <- osp_results |> html_elements('li.listing-item') |> html_text() |> as_tibble() |> separate(value, c('date', 'title'), sep=":")
+announcements <- fda_results |> html_elements('div.item-list li') |> html_text() |> as_tibble() |> separate(value, c('date', 'title'), sep=" - ", extra = "merge")
 ```
 
-That worked, but it also exposed a couple of things, as that Warning message indicates: not all of the rows had a colon in them and the `title` column has a leading space. Let's fix both of those - we'll drop the rows where the title is NA and convert the dates into actual dates.
+That worked, but if you look at the date column, there's some extra whitespace in it, and it's still text, not a date. Let's fix both of those - we'll drop any rows where the title is NA, clean up the spaces and convert the dates into actual dates.
 
 ```{r}
-releases <- osp_results |> html_elements('li.listing-item') |> html_text() |> as_tibble() |> separate(value, c('date', 'title'), sep=":") |> drop_na(title) |> mutate(title = str_squish(title), date = mdy(date))
+announcements <- fda_results |> html_elements('div.item-list li') |> html_text() |> as_tibble() |> separate(value, c('date', 'title'), sep=" - ", extra = "merge") |> drop_na(title) |> mutate(title = str_squish(title), date = mdy(str_squish(date)))
 ```
 
 And now you have the data.

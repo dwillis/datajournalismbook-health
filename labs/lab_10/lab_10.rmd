@@ -1,7 +1,7 @@
 ---
 title: "lab_10"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -22,33 +22,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-Let's explore Maryland elections, power outages and electric vehicle data and make some maps!
+Let's explore Maryland health insurance, nursing home and COVID-19 vaccination data and make some maps!
 
 ## Questions
 
-**Q1.** Maryland voters made history last November by electing the state's first two African-American statewide office holders: Wes Moore as governor and Anthony Brown as attorney general. You want to compare the two's electoral performances. Using the `md_statewide_county.csv` file in the data folder, calculate the total number of votes for both the governor's race and the attorney general's race, then percentages for both Moore and Brown *based on the total of their respective contests*. Then calculate the difference between their percentages.
+**Q1.** The Maryland Department of Health tracks the share of residents without health insurance as part of its State Health Improvement Plan. You want to see which counties are doing better or worse than the state as a whole. Using the `md_uninsured_county.csv` file in the data folder, convert both the county and state uninsured rates to percentages (they're stored as decimals), then calculate the difference between each county's rate and the statewide rate, in percentage points.
 
-Get the geometry for Maryland's counties using tigris and, joining that dataframe to your results dataframe, make a county-level map of the differences between Moore and Brown's percentages. What is the story here, and what is the county with the most interesting results?
+Get the geometry for Maryland's counties using tigris and, joining that dataframe to your results dataframe, make a county-level map of the differences. Since some counties are above the state rate and some are below, think about what kind of color scale makes sense. What is the story here, and what is the county with the most interesting results?
 
 **A1.**
 
 ```{r}
 ```
 
-**Q2.** Make a county-level map to explore the number of customers impacted by power outages in Maryland from last March. Load the `county_outages_march2023.csv` file in the data folder and calculate a rate of customers with outages per 10,000 total customers for each county. Then join that dataframe to your Maryland counties dataframe you made in Q1 and create a county-level map of the results; you may need to tweak the fill scale to make the distinctions clearer. What's the potential story here? Given access to other months' outage data, what would your next steps be in reporting a story?
+**Q2.** Make a county-level map to explore the fines paid by Maryland nursing homes. Load the `md_nursing_homes.csv` file in the data folder, which has one row per nursing home, and calculate the total fines and total certified beds for each county. Then calculate a rate of fines per 100 certified beds for each county. Join that dataframe to your Maryland counties dataframe you made in Q1 (you'll need to think about how to match the county names) and create a county-level map of the results; you may need to tweak the fill scale to make the distinctions clearer. What's the potential story here? Given access to inspection reports for these nursing homes, what would your next steps be in reporting a story?
 
 **A2.**
 
 ```{r}
 ```
 
-**Q3.** You've been assigned a story about the use of electric vehicles in Maryland and you want to make a map of the prevalence of electric vehicles in each county. Load the `ev_2020_2023.csv` file, which has the number of electric and hybrid vehicles per county from July 2020 and March 2023 and calculate a percentage change for each county (remember, that's `new-old/old`). Using the Maryland counties dataframe you made for Q1, make a county map showing the percentage change. What counties stand out to you? What questions do you have about the changes you're seeing?
+**Q3.** You've been assigned a story about COVID-19 vaccination in Maryland and you want to make a map of how vaccination grew in each county after the first vaccines became widely available. Load the `md_covid_vax_county.csv` file, which has the number of people who were fully vaccinated in each county as of July 1, 2021 and in April 2023, when the state stopped updating the data, and calculate a percentage change for each county (remember, that's `new-old/old`). Using the Maryland counties dataframe you made for Q1, make a county map showing the percentage change. What counties stand out to you? What questions do you have about the changes you're seeing?
 
-Next, use tidycensus to retrieve county population data for Maryland from 2021 (you did this in the pre_lab) and join it to your vehicles dataframe. HINT: you may not need to join it on the county name, and you should already have the geometry!
+Next, use tidycensus to retrieve county population data for Maryland from 2021 (you did this in the pre_lab) and join it to your vaccinations dataframe. HINT: look closely at how the county names are written in each dataframe, and think about what you did in the pre_lab to make them match. You should already have the geometry!
 
-Then, calculate a per capita rate of electric & hybrid vehicles using the March 2023 figure and the population estimate. You will need to choose the "per capita" value.
+Then, calculate a per capita rate of fully vaccinated people using the April 2023 figure and the population estimate. You will need to choose the "per capita" value.
 
-Finally, make a second county map showing the per capita rate. What counties stand out on this map? How is it different from the first one you made?
+Finally, make a second county map showing the per capita rate. What counties stand out on this map? How is it different from the first one you made? Which map tells readers more about how protected each county's residents were?
 
 **A3.**
 

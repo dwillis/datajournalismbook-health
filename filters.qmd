@@ -4,11 +4,11 @@ title: "Filters and selections"
 
 More often than not, we have more data than we want. Sometimes we need to be rid of that data. In `dplyr`, there's two ways to go about this: filtering and selecting.
 
-**Filtering creates a subset of the data based on criteria**. All records where the amount is greater than 150,000. All records that match "College Park". Something like that. **Filtering works with rows -- when we filter, we get fewer rows back than we start with.**
+**Filtering creates a subset of the data based on criteria**. All records where the number of prescriptions is greater than 1,000. All records that match "Baltimore". Something like that. **Filtering works with rows -- when we filter, we get fewer rows back than we start with.**
 
-**Selecting simply returns only the fields named**. So if you only want to see city and amount, you select those fields. When you look at your data again, you'll have two columns. If you try to use one of your columns that you had before you used select, you'll get an error. **Selecting works with columns. You will have the same number of records when you are done, but fewer columns of data to work with.**
+**Selecting simply returns only the fields named**. So if you only want to see city and number of prescriptions, you select those fields. When you look at your data again, you'll have two columns. If you try to use one of your columns that you had before you used select, you'll get an error. **Selecting works with columns. You will have the same number of records when you are done, but fewer columns of data to work with.**
 
-Let's continue to work with the UMD course data we used in the previous chapter. First, we need to load the tidyverse:
+Let's continue to work with the Maryland Medicare prescriber data we used in the previous chapter. First, we need to load the tidyverse:
 
 ```{r}
 #| output: false
@@ -16,63 +16,63 @@ library(tidyverse)
 ```
 
 ```{r}
-umd_courses <- read_rds("data/umd_courses.rds")
+md_prescribers <- read_rds("data/md_partd_prescribers.rds")
 ```
 
-If we want to see only those courses offered a particular department, we can use the `filter` function to isolate just those records. Filter works with something called a comparison operator. We need to filter all records equal to "Journalism". The comparison operators in R, like most programming languages, are == for equal to, != for not equal to, \> for greater than, \>= for greater than or equal to and so on.
+If we want to see only those prescribers with a particular specialty, we can use the `filter` function to isolate just those records. Filter works with something called a comparison operator. We need to filter all records equal to "Psychiatry". The comparison operators in R, like most programming languages, are == for equal to, != for not equal to, \> for greater than, \>= for greater than or equal to and so on.
 
 **Be careful: `=` is not `==` and `=` is not "equal to". `=` is an assignment operator in most languages -- how things get named.**
 
 ```{r}
-journalism_courses <- umd_courses |> filter(department == "Journalism")
+psychiatrists <- md_prescribers |> filter(specialty == "Psychiatry")
 
-head(journalism_courses)
+head(psychiatrists)
 ```
 
-And just like that, we have just Journalism results, which we can verify looking at the head, the first six rows.
+And just like that, we have just psychiatrists -- 1,671 rows across three years -- which we can verify looking at the head, the first six rows.
 
-We also have more data than we might want. For example, we may only want to work with the course id and title.
+We also have more data than we might want. For example, we may only want to work with each prescriber's name, the year and the number of prescriptions.
 
 To simplify our dataset, we can use select.
 
 ```{r}
-selected_journalism_courses <- journalism_courses |> select(id, title)
+selected_psychiatrists <- psychiatrists |> select(last_name, first_name, year, total_claims)
 
-head(selected_journalism_courses)
+head(selected_psychiatrists)
 ```
 
-And now we only have two columns of data for whatever analysis we might want to do.
+And now we only have four columns of data for whatever analysis we might want to do.
 
 ## Combining filters
 
-So let's say we wanted to see all the courses in the Theatre department with at least 15 seats. We can do this a number of ways. The first is we can chain together a whole lot of filters.
+So let's say we wanted to see all the dentists who wrote at least 500 prescriptions for Medicare patients in a year. We can do this a number of ways. The first is we can chain together a whole lot of filters.
 
 ```{r}
-theatre_seats_15 <- umd_courses |> filter(department == "Theatre") |> filter(seats >= 15)
+dentists_500 <- md_prescribers |> filter(specialty == "Dentist") |> filter(total_claims >= 500)
 
-nrow(theatre_seats_15)
+nrow(dentists_500)
 ```
 
-That gives us 308 records But that's repetitive, no? We can do better using a single filter and boolean operators -- AND and OR. In this case, AND is `&` and OR is `|`.
+That gives us 53 records -- out of more than 7,400 dentist rows. But that's repetitive, no? We can do better using a single filter and boolean operators -- AND and OR. In this case, AND is `&` and OR is `|`.
 
 The difference? With AND, all conditions must be true to be included. With OR, any of those conditions things can be true and it will be included.
 
 Here's the difference.
 
 ```{r}
-and_theatre_seats_15 <- umd_courses |> filter(department == "Theatre" & seats >= 15)
+and_dentists_500 <- md_prescribers |> filter(specialty == "Dentist" & total_claims >= 500)
 
-nrow(and_theatre_seats_15)
+nrow(and_dentists_500)
 ```
 
 So AND gives us the same answer we got before. What does OR give us?
 
 ```{r}
-and_theatre_seats_15 <- umd_courses |> filter(department == "Theatre" | seats >= 15)
+or_dentists_500 <- md_prescribers |> filter(specialty == "Dentist" | total_claims >= 500)
 
-nrow(and_theatre_seats_15)
+nrow(or_dentists_500)
 ```
 
-So there's 54,000 rows that are EITHER Theatre classes OR have at least 15 seats. OR is additive; AND is restrictive.
+So there's more than 31,000 rows that are EITHER dentists OR prescribers with at least 500 prescriptions. OR is additive; AND is restrictive.
 
 A general tip about using filter: it's easier to work your way towards the filter syntax you need rather than try and write it once and trust the result. Each time you modify your filter, check the results to see if they make sense. This adds a little time to your process but you'll thank yourself for doing it because it helps avoid mistakes.

@@ -1,7 +1,7 @@
 ---
 title: "lab_02"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -23,40 +23,40 @@ library(lubridate)
 
 ## Load Data
 
-Let's keep working with the UMD courses and Maryland campaign expense data we used in the pre_lab.
+Let's keep working with the Maryland Medicare prescriber data and the Open Payments data on payments from drug and device companies that we used in the pre_lab.
 
 ```{r}
-umd_courses <- read_rds("data/umd_courses.rds")
-maryland_expenses <- read_csv("data/maryland_expenses.csv")
+md_prescribers <- read_rds("data/md_partd_prescribers.rds")
+md_payments <- read_csv("data/md_open_payments_2025.csv.gz")
 ```
 
 ## Answer questions
 
-**Q1.** How many departments have offered the courses with "Climate" in the title and at least one seat? Which department has offered the most? **A1.**
+**Q1.** How many specialties have "Surgery" in their name and at least one prescriber in 2024? Which of those specialties had the most prescribers? Look at the list: are there any specialties that seem like they might be the same thing written differently? **A1.**
 
 ```{r}
 ```
 
-**Q2.** Of the departments listed in A1, which one is the most interesting to you, and why? **A2.**
+**Q2.** Of the specialties listed in A1, which one is the most interesting to you, and why? **A2.**
 
-**Q3** Which departments offered the most courses in the Fall 2024 term? And which departments in that term have at least one syllabus posted? Answer both of those questions and then compare the top five departments - how are they different?
+**Q3** Which specialties had the most prescribers in 2024? And how many prescribers in each of those specialties wrote at least one opioid prescription that year? Answer both of those questions and then compare the top five specialties - how are they different? (Hint: some prescribers have NA in the opioid_claims column because Medicare suppresses small numbers; think about how you want to handle those.)
 
 **A3.**
 
 ```{r}
 ```
 
-**Q4.** Using the Maryland campaign expenses data, change the datatype of the expenditure_date column so that it is a date and not a chr, saving the result as a new dataframe. Then create a new column for the month based on expenditure_date. Then write code that shows total amount spent each month by Wes Moore's committee (you'll need to search the data to find the exact name, and we're not looking in payee_name). Write a sentence describing the pattern of spending over time. **A4.**
+**Q4.** Using the Open Payments data, change the datatype of the date_of_payment column so that it is a date and not a chr, saving the result as a new dataframe. Then create a new column for the month based on date_of_payment. Then write code that shows the total amount paid each month by Novo Nordisk, which makes Ozempic and Wegovy (you'll need to search the data to find the exact name of the company). Write a sentence describing the pattern of payments over time. **A4.**
 
 ```{r}
 ```
 
-**Q5.** Using case_when(), create a column in the Maryland expenses data called `spending_location` indicating whether each record spent money in Maryland or outside Maryland. For records that are in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Then write code that shows the total amount of money spent in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe). **A5**
+**Q5.** Using case_when(), create a column in the Open Payments data called `company_location` indicating whether each payment came from a company based in Maryland or outside Maryland, using the company_state column. For records where the company is in Maryland, make the new column's value "In-state" and for all others, make it "Out of state". Watch out for payments where company_state is NA: what do you think those are? Then write code that shows the total amount of money paid in each category and describe the results. You can do this in one statement or break it up into two statements (saving the new column to your dataframe). **A5**
 
 ```{r}
 ```
 
-**Q6.** Choose your own adventure: using either the UMD courses or campaign expenses data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. **A6.**
+**Q6.** Choose your own adventure: using either the prescriber or payments data, ask and answer a question that is different than the previous ones. You can use one of the ones you provided in the pre_lab. **A6.**
 
 ```{r}
 ```

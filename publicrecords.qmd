@@ -50,4 +50,13 @@ Please and thank you will get you more records than any lawyer or well-written r
 
 When requesting data, you are going to scare the press office and you are going to confuse the agency lawyer. Request to have their data person on the phone.
 
-A good source of info? Records retention schedules, often required by law or administrative rule at an agency. Here's an example from [Maryland's Circuit Courts](https://www.courts.state.md.us/sites/default/files/import/circuit/pdfs/retentionschedule_2330.pdf). 
+A good source of info? Records retention schedules, often required by law or administrative rule at an agency. Here's an example from [Maryland's Circuit Courts](https://www.courts.state.md.us/sites/default/files/import/circuit/pdfs/retentionschedule_2330.pdf).
+
+## Health records
+
+Health reporting depends on public records, but it also runs into some of the toughest exemptions. Agencies frequently cite patient privacy -- including HIPAA, which covers health care providers and insurers -- to deny requests, sometimes for records that don't actually identify anyone. A few things to know:
+
+-   **Ask for aggregates.** An agency that won't release individual patient records may be able to give you counts by county, zip code, age group or month. Ask what the smallest level of detail is that they can provide, and what their rules are for suppressing small numbers.
+-   **Inspection and enforcement records are usually public.** Nursing home inspection reports, restaurant inspections, hospital citations and licensing board actions against doctors and nurses are records of how the government regulates health care, and they're generally available. Many are already online.
+-   **Federal data often exists for state questions.** If a state agency won't give you data, check whether it reports the same information to a federal agency such as the CDC or the Centers for Medicare & Medicaid Services, which may publish it.
+-   **Save what you find.** Health agencies reorganize their websites and remove old reports all the time. The Maryland kindergarten vaccination reports used in this book disappeared from the state's website and had to be recovered from the Internet Archive's Wayback Machine.

@@ -27,7 +27,7 @@ Not all of these data smells are detectable in code. You may have to ask people 
 
 But with several of these data smells, we can do them first, before we do anything else.
 
-We're going to examine several here as they apply to some [Maryland state government payments data](https://opendata.maryland.gov/Budget/State-of-Maryland-Payments-Data-FY2008-to-FY2024/7syw-q4cy) and [Maryland state government grant & loan data](https://opendata.maryland.gov/Budget/State-of-Maryland-Grant-and-Loan-Data-FY2009-to-FY/absk-avps).
+We're going to examine several here as they apply to some data from [Open Payments](https://openpaymentsdata.cms.gov/), a federal database of payments that drug and medical device companies make to doctors, nurse practitioners, physician assistants and teaching hospitals -- for consulting, speaking, travel, research and more -- and to some [Maryland state health grants data](https://opendata.maryland.gov/Budget/State-of-Maryland-Grant-and-Loan-Data-FY2009-to-FY/absk-avps). The Open Payments file has every payment of 2025 to a Maryland recipient except for food and beverages, which make up the vast majority of payments but a small share of the money.
 
 ## Wrong Type
 
@@ -43,7 +43,6 @@ Let's load the tidyverse.
 options(scipen=999)
 # Load the tidyverse
 library(tidyverse)
-
 ```
 
 This time, we're going to load the data in a CSV format, which stands for comma separated values and is essentially a fancy structured text file. Each column in the csv is separated -- "delimited" -- by a comma from the next column.
@@ -52,7 +51,7 @@ We're also going to introduce a new argument to our function that reads in the d
 
 ```{r}
 # Load the data
-payments <- read_csv("data/State_of_Maryland_Payments_Data__FY2008_to_FY2024_20250115.csv", guess_max=10)
+payments <- read_csv("data/md_open_payments_2025_raw.csv", guess_max=10)
 ```
 
 Pay attention to the red warning that signals "one or more parsing issues." It advises us to run the problems() function to see what went wrong. Let's do that.
@@ -61,12 +60,12 @@ Pay attention to the red warning that signals "one or more parsing issues." It a
 problems(payments)
 ```
 
-It produces a table of all the parsing problems. It has 369 rows, which means we have that some problems but not a huge number considering we have 369,000 rows. In almost every case here, the `readr` library has guessed that a given column was of a "double" data type -- a number. It did it based on very limited information -- only 10 rows. So, when it hit a value that looked like a date, or a character string, it didn't know what to do. So it just didn't read in that value correctly.
+It produces a table of all the parsing problems. It has 307 rows, which means we have some problems but not a huge number considering we have more than 25,000 rows. Every one of them is in column 4, `Teaching Hospital Name`. Most payments go to individual doctors and nurse practitioners, so that column is empty in the first 10 rows. With nothing to go on, `readr` guessed that it was a "logical" column -- one that holds TRUE or FALSE. So when it hit the name of a hospital, it didn't know what to do, and it just didn't read in that value. We'd have lost every payment to a teaching hospital without knowing it.
 
-The easy way to fix this is to set the guess_max argument higher. It will take a little longer to load, but we'll use every single row in the data set to guess the column type -- all 322,138 of them.
+The easy way to fix this is to set the guess_max argument higher. It will take a little longer to load, but we'll use every single row in the data set to guess the column type -- all 25,449 of them.
 
 ```{r}
-payments <- read_csv("data/State_of_Maryland_Payments_Data__FY2008_to_FY2024_20250115.csv", guess_max=369008)
+payments <- read_csv("data/md_open_payments_2025_raw.csv", guess_max=25449)
 ```
 
 No parsing errors this time! You can see what the columns are using the `glimpse` function:
@@ -75,52 +74,79 @@ No parsing errors this time! You can see what the columns are using the `glimpse
 glimpse(payments)
 ```
 
-Things that should be characters -- like agency name, vendor name -- are characters (chr). Things that should be numbers (dbl) -- like amount and fiscal year -- are numbers. We've seen before that sometimes dates aren't defined as date datatypes by R - we can fix that using `lubridate`.
+Things that should be characters -- like company name and recipient name -- are characters (chr). Things that should be numbers (dbl) -- like amount and number of payments -- are numbers. We've seen before that sometimes dates aren't defined as date datatypes by R - we can fix that using `lubridate`.
 
 ## Wrong Spatial Data
 
-The second smell we can find in code is **wrong spatial data**. Spatial data means data that refers to some geography; in this dataset the only geographical element is the vendor's zip code. Zip codes should be, at a minimum, five characters long (although composed of numbers, zip codes aren't used as numbers).
+The second smell we can find in code is **wrong spatial data**. Spatial data means data that refers to some geography; in this dataset that includes the recipient's city and ZIP code. ZIP codes should be, at a minimum, five characters long (although composed of numbers, zip codes aren't used as numbers).
 
-We can check to see if any of the zip codes are less than five characters by using [a function called `str_length`](https://stringr.tidyverse.org/reference/str_length.html) inside a filter:
+We can check the length of the ZIP codes by using [a function called `str_length`](https://stringr.tidyverse.org/reference/str_length.html) inside a mutate, and then counting:
 
 ```{r}
 payments |>
-  group_by(`Vendor Zip`) |>
-  filter(str_length(`Vendor Zip`) < 5) |> 
+  mutate(zip_length = str_length(`Recipient Zip Code`)) |> 
+  group_by(zip_length) |>
   summarise(
     count=n()
   ) |>
   arrange(desc(count))
 ```
 
-So, yes, we definitely have some zip codes that are less than 5 characters long, which is not good, particularly because we don't have any other geographical information (such as a state) that would tell us whether we're missing a leading zero or some other character.
+So we have two kinds of ZIP codes: five-digit ones, and ten-character ones like "21287-0005" -- the ZIP+4 format, with a hyphen. Neither is wrong, but if we wanted to count payments by ZIP code, "21287" and "21287-0005" would be counted as different places. You will learn how to fix that in the next chapter.
+
+What about the city? Let's look at every version of a city name that starts with "Balt":
+
+```{r}
+payments |>
+  filter(str_detect(`Recipient City`, "^Balt|^BALT")) |>
+  group_by(`Recipient City`) |>
+  summarise(
+    count=n()
+  ) |>
+  arrange(desc(count))
+```
+
+Baltimore appears in all capital letters, in mixed case, misspelled and with a stray comma. And "Baltimore City" may or may not mean the same thing -- many addresses in Baltimore County also use "Baltimore" as their city. Any time you're working with place names typed in by people, you'll find problems like these.
 
 ## Gaps in data & Missing data
 
-Let's now look at **gaps in data**. These often occur when you have a date or time element in your data, but there are other potential gaps, too. To illustrate those, we're going to introduce some Maryland state grant and loan data from 2009 forward. Let's load it and take a look:
+Let's now look at **gaps in data**. These often occur when you have a date or time element in your data, but there are other potential gaps, too. To illustrate those, we're going to introduce some Maryland state health grants data from 2009 forward: grants made by the state health department, the Maryland Community Health Resources Commission, the Department of Aging and the state's Stem Cell Research Fund. Let's load it and take a look:
 
 ```{r}
-md_grants_loans <- read_csv("data/State_of_Maryland_Grant_and_Loan_Data__FY2009_to_FY2022_20250115.csv")
+md_health_grants <- read_csv("data/md_health_grants.csv")
 ```
 
-Each row represents a recipient of state grant or loan, along with information about their location and the state agency that provided the money. When we talk about gaps, often they indicate the administrative rules. Here's an example: let's count the number of payments in each category (Grant or Loan) by year in this dataset:
+Each row represents a grant, along with information about the recipient's location and the state agency that provided the money. When we talk about gaps, often they indicate the administrative rules. Here's an example: Maryland's Stem Cell Research Fund gives grants to scientists and companies working on stem cell therapies. Let's count the number of stem cell grants by year in this dataset, using the Description column:
 
 ```{r}
-md_grants_loans |> 
-  group_by(`Fiscal Year`, Category) |> 
+md_health_grants |> 
+  filter(str_detect(Description, "(?i)stem cell")) |> 
+  group_by(`Fiscal Year`) |> 
   summarize(count = n()) |> 
   arrange(`Fiscal Year`)
 ```
 
-We can see a couple of issues here: first, there is no loan data for FY 2009. That's mentioned in [the source page for the data](https://opendata.maryland.gov/Budget/State-of-Maryland-Grant-and-Loan-Data-FY2009-to-FY/absk-avps). It's good to be aware of all gaps in data, but they don't always represent a problem. Second, and more problematic, there are a few records where the Category is NA - that data is missing. There also are some inconsistent values - there are 50 records in FY2013 with the category of "L" (probably loans) and one in FY 2017 that is listed as "Contract".
+(That `(?i)` at the start of the pattern tells `str_detect` to ignore upper and lower case, so it matches "Stem Cell", "stem cell" and "STEM CELL".)
+
+We can see an issue here: there are no stem cell grants listed for fiscal years 2016 and 2017. Did the fund stop making grants for two years? Did the state record them differently -- under a different description, or a different agency? Or are they missing from the data? Any of those is possible, and the data alone can't tell us which. It's good to be aware of all gaps in data, but they don't always represent a problem. This is the kind of thing you'd need to check with the agency that publishes the data before writing that grants stopped.
+
+Missing values are a related problem. Let's check whether every grant has a ZIP code:
+
+```{r}
+md_health_grants |> 
+  filter(is.na(`Zip Code`)) |> 
+  nrow()
+```
+
+Zero. Every grant has something in the ZIP code column -- although, as we'll see in the next chapter, not everything in that column is a valid ZIP code. Checking for NA values only tells you whether something is there, not whether it's right.
 
 ## Unusual Outliers
 
-Any time you are going to focus on a column for analysis, you should check for unusual values. Are there any unusually large values or unusually small values? Are there any values that raise immediate questions about the data? Let's look at the smallest amounts in the grants and loan data.
+Any time you are going to focus on a column for analysis, you should check for unusual values. Are there any unusually large values or unusually small values? Are there any values that raise immediate questions about the data? Let's look at the smallest amounts in the grants data.
 
 ```{r}
-md_grants_loans |> 
+md_health_grants |> 
   arrange(Amount)
 ```
 
-There are two grants for less than \$100, which might not be problematic at all, but given that just two of 19,000 are for very small amounts you might wonder if there are suggested amounts for applicants and how tiny ones get evaluated compared to very large requests. As journalists, we should be skeptical of information put in front of us and ask why or what it says about the data itself.
+There are a handful of grants for less than \$2,000, mostly to local agencies on aging, which might not be problematic at all, but given that just a few of more than 2,000 grants are for very small amounts you might wonder whether they're partial payments, adjustments or something else. As journalists, we should be skeptical of information put in front of us and ask why or what it says about the data itself.

@@ -2,7 +2,7 @@
 title: "Mutating data"
 ---
 
-Often the data you have will prompt questions that it doesn't immediately answer. Election results, for example, have raw vote totals but we often don't use those to make comparisons between candidates unless the numbers are small. We need percentages!
+Often the data you have will prompt questions that it doesn't immediately answer. Health data, for example, often has raw counts -- of cases, beds, deaths or patients -- but we don't use those to make comparisons between places of different sizes. We need percentages and rates!
 
 To do that in R, we can use `dplyr` and `mutate` to calculate new metrics in a new field using existing fields of data. That's the essence of `mutate` - using the data you have to answer a new question.
 
@@ -13,109 +13,109 @@ So first we'll import the tidyverse so we can read in our data and begin to work
 library(tidyverse)
 ```
 
-Now we'll import a dataset of county-level gubernatorial results from Maryland's 2022 general election that is in the data folder in this chapter's pre-lab directory. We'll use this to explore ways to create new information from existing data.
+Now we'll import a dataset of Maryland's nursing homes from the federal Centers for Medicare & Medicaid Services that is in the data folder. It has one row for each nursing home, including the number of beds certified to serve Medicare and Medicaid patients and the average number of residents per day. We'll use this to explore ways to create new information from existing data.
 
 ```{r}
-general_22 <- read_csv('data/md_gov_county.csv')
+md_nursing_homes <- read_csv('data/md_nursing_homes.csv')
 ```
 
-Let's add a column called `percent_moore` for the percentage of votes that went to Wes Moore, the Democratic candidate who won the election, in each county. The code to calculate a percentage is pretty simple. Remember, with `summarize`, we used `n()` to count things. With `mutate`, we use very similar syntax to calculate a new value -- a new column of data -- using other values in our dataset.
+Let's add a column called `pct_occupied` for the percentage of each nursing home's beds that are filled on an average day. The code to calculate a percentage is pretty simple. Remember, with `summarize`, we used `n()` to count things. With `mutate`, we use very similar syntax to calculate a new value -- a new column of data -- using other values in our dataset.
 
-To calculate a percentage, we need both the number of votes for Moore but also the total number of votes. We'll use mutate to create both columns. The first will be total votes. The key here is to save the dataframe to itself so that our changes stick.
+To calculate that percentage, we need the average number of residents and the number of beds. While we're at it, let's also calculate how many beds are empty on an average day. We'll use mutate to create both columns. The key here is to save the dataframe to itself so that our changes stick.
 
 ```{r}
-general_22 <- general_22 |>
+md_nursing_homes <- md_nursing_homes |>
   mutate(
-    total_votes = cox + moore + lashar + wallace + write_ins,
-    pct_moore = moore/total_votes
+    empty_beds = certified_beds - avg_residents_per_day,
+    pct_occupied = avg_residents_per_day/certified_beds
   )
 ```
 
-But what do you see right away? Do those numbers look like we expect them to? No. They're a decimal expressed as a percentage. So let's fix that by multiplying by 100. Since we're replacing the contents of our new `pct_moore` column, we can just update our previous code and run it again:
+But what do you see right away? Do those numbers look like we expect them to? No. They're a decimal expressed as a percentage. So let's fix that by multiplying by 100. Since we're replacing the contents of our new `pct_occupied` column, we can just update our previous code and run it again:
 
 ```{r}
-general_22 <- general_22 |>
+md_nursing_homes <- md_nursing_homes |>
   mutate(
-    pct_moore = (moore/total_votes)*100
+    pct_occupied = (avg_residents_per_day/certified_beds)*100
   )
 ```
 
 Now, does this ordering do anything for us? No. Let's fix that with arrange.
 
 ```{r}
-general_22 <- general_22 |>
+md_nursing_homes <- md_nursing_homes |>
   mutate(
-    pct_moore = (moore/total_votes)*100
+    pct_occupied = (avg_residents_per_day/certified_beds)*100
   ) |> 
-  arrange(desc(pct_moore))
+  arrange(desc(pct_occupied))
 ```
 
-So now we have results ordered by `pct_moore` with the highest percentage first. To see the lowest percentage first, we can reverse that `arrange` function - we don't need to recalculate the column:
+So now we have nursing homes ordered by `pct_occupied` with the highest percentage first. Look at the top few: some nursing homes are more than 100% occupied, which shouldn't be possible. Is it an error? Not necessarily. "Certified beds" counts only the beds certified to serve Medicare and Medicaid patients, while the average number of residents may include people whose care is paid for some other way. When a calculation gives you an impossible-looking answer, that's a signal to read the documentation -- and maybe call the agency -- before you publish anything.
+
+To see the lowest percentage first, we can reverse that `arrange` function - we don't need to recalculate the column:
 
 ```{r}
-general_22 |>
-  arrange(pct_moore)
+md_nursing_homes |>
+  arrange(pct_occupied)
 ```
 
-Moore had his weakest performance in Garrett County, at the far western edge of the state.
+One nursing home on the Eastern Shore had fewer than two residents on an average day in 38 certified beds. That's another number worth a phone call: is it closing, or just opened?
 
 ## Another use of mutate
 
-Mutate is also useful for standardizing data - for example, making different spellings of, say, campaign spending recipients.
+Mutate is also useful for standardizing data - for example, making different spellings of, say, the cities where doctors practice.
 
-Let's load some Maryland state campaign expenditures into a `maryland_expenses` dataframe, and focus in particular on the `payee_name` column.
+Let's load some data from the federal Open Payments database, which records payments that drug and medical device companies make to doctors, nurse practitioners and other health care providers. This file has every 2025 payment to a Maryland recipient -- more than 300,000 of them -- and it's compressed, which `read_csv()` handles automatically. We'll focus in particular on the `recipient_city` column.
 
 ```{r}
-maryland_expenses <- read_csv("data/maryland_expenses.csv")
-maryland_expenses
+md_payments <- read_csv("data/md_open_payments_2025.csv.gz")
+md_payments
 ```
 
-You'll notice that there's a mix of styles: lower-case and upper-case names like "Anedot" and "ANEDOT", for example. R will think those are two different payees, and that will mean that any aggregates we create based on payee_name won't be accurate.
+You'll notice that there's a mix of styles: lower-case and upper-case names like "Baltimore" and "BALTIMORE", or "Glen burnie" and "GLEN BURNIE", for example. R will think those are two different cities, and that will mean that any aggregates we create based on recipient_city won't be accurate.
 
 So how can we fix that? Mutate - it's not just for math! And a function called `str_to_upper` that will convert a character column into all uppercase.
 
 ```{r}
-standardized_maryland_expenses <- maryland_expenses |>
+standardized_md_payments <- md_payments |>
   mutate(
-    payee_upper = str_to_upper(payee_name)
+    city_upper = str_to_upper(recipient_city)
 )
 ```
 
-There are lots of potential uses for standardization - addresses, zip codes, anything that can be misspelled or abbreviated.
+There are lots of potential uses for standardization - addresses, zip codes, anything that can be misspelled or abbreviated. (Changing the case won't fix "BALTIMOE" or "BALTO", though. We'll get to that in later chapters.)
 
 ## A more powerful use
 
-Mutate is even more useful when combined with some additional functions. Let's keep rolling with our expenditure data. Take a look at the address column: it contains a full address, including the state, spelled out. It would be useful to have a separate `state` column with an abbreviation. We can check to see if a state name is contained in that column and then populate a new column with the value we want, using the functions `str_detect` and `case_when`. We can identify the state by the following pattern: a space, followed by the full name, followed by another space. So, " Maryland ". The `case_when` function handles multiple variations, such as if the state is Maryland or the state is Texas, etc. Crucially, we can tell R to populate the new column with `NA` if it doesn't find a match.
+Mutate is even more useful when combined with some additional functions. Let's keep rolling with our payments data. Take a look at the product_name column: it contains the name of the drug or device a payment was connected to, if any. It would be useful to have a separate `condition` column describing what the drug treats, so we could ask how much drug companies spend on doctors in connection with, say, diabetes and weight loss drugs compared to cancer drugs. We can check to see if a drug name is contained in that column and then populate a new column with the value we want, using the functions `str_detect` and `case_when`. Since drug names are capitalized differently ("OZEMPIC" and "Ozempic"), we'll start the pattern with `(?i)`, which tells `str_detect` to ignore case. The `case_when` function handles multiple variations, such as if the drug is Ozempic or Wegovy or Repatha, etc. And the vertical bar `|` inside a pattern means OR. Crucially, we can tell R to populate the new column with `NA` if it doesn't find a match.
 
 ```{r}
-maryland_expenses_with_state <- maryland_expenses |>
+md_payments_with_condition <- md_payments |>
   mutate(
-    state = case_when(
-        str_detect(address, " Maryland ") ~ "MD",
-        str_detect(address, " California ") ~ "CA",
-        str_detect(address, " Washington ") ~ "WA",
-        str_detect(address, " Louisiana ") ~ "LA",
-        str_detect(address, " Florida ") ~ "FL",
-        str_detect(address, " North Carolina ") ~ "NC",
-        str_detect(address, " Massachusetts ") ~ "MA",
-        str_detect(address, " West Virginia ") ~ "WV",
-        str_detect(address, " Virginia ") ~ "VA",
+    condition = case_when(
+        str_detect(product_name, "(?i)ozempic|wegovy|rybelsus|mounjaro|zepbound|saxenda") ~ "Diabetes and weight loss",
+        str_detect(product_name, "(?i)otezla|zoryve|opzelura") ~ "Psoriasis and eczema",
+        str_detect(product_name, "(?i)repatha") ~ "High cholesterol",
+        str_detect(product_name, "(?i)leqembi") ~ "Alzheimer's disease",
+        str_detect(product_name, "(?i)xtandi") ~ "Prostate cancer",
+        str_detect(product_name, "(?i)enhertu") ~ "Breast cancer",
+        str_detect(product_name, "(?i)linzess") ~ "Digestive disorders",
         .default = NA
       )
   )
 ```
 
-There's a lot going on here, so let's unpack it. It starts out as a typical mutate statement, but `case_when` introduces some new things. Each line checks to see if the pattern is contained in the address column, followed by `~` and then a value for the new column for records that match that check. You can read it like this: "If we find ' Maryland ' in the address column, then put 'MD' in the state column" for Maryland and then a handful of states, and if we don't match any state we're looking for, make state `NA`.
+There's a lot going on here, so let's unpack it. It starts out as a typical mutate statement, but `case_when` introduces some new things. Each line checks to see if the pattern is contained in the product_name column, followed by `~` and then a value for the new column for records that match that check. You can read it like this: "If we find 'ozempic' or 'wegovy' or any of the other names in the product_name column, then put 'Diabetes and weight loss' in the condition column" for a handful of the drugs mentioned most often in the data, and if we don't match any drug we're looking for, make condition `NA`.
 
-We can then use our new `state` column in group_by statements to make summarizing easier.
+We can then use our new `condition` column in group_by statements to make summarizing easier.
 
 ```{r}
-maryland_expenses_with_state |>
-  group_by(state) |>
-  summarize(total = sum(amount)) |>
+md_payments_with_condition |>
+  group_by(condition) |>
+  summarize(total = sum(amount), payments = n()) |>
   arrange(desc(total))
 ```
 
-Most expenditures seem to have occurred in Maryland, which makes sense, although we haven't assigned a state for every transaction.
+Most of the money isn't connected to any of the drugs we looked for, which makes sense: there are thousands of products in the data, and many payments aren't tied to a product at all. Of the drugs we did look for, diabetes and weight loss drugs lead the way, with more than \$1 million in payments to Maryland health care providers.
 
 Mutate is there to make your data more useful and to make it easier for you to ask more and better questions of it.

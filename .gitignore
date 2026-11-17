@@ -64,3 +64,6 @@ index.log
 /*.pdf
 
 **/*.quarto_ipynb
+
+# raw API pulls cached by scripts/fetch_data.R
+data-raw/

@@ -1,7 +1,7 @@
 ---
 title: "pre_lab_10.Rmd"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -42,7 +42,6 @@ Let's start with the absolute basics of geographic data: loading and viewing. Lo
 library(tidyverse)
 library(sf)
 library(janitor)
-#library(maptools)
 ```
 
 First: an aside on geographic data. There are many formats for geographic data, but data type you'll see the most is called the shapefile. It comes from a company named ERSI, which created the most widely used GIS software in the world. For years, they were the only game in town, really, and the shapefile became ubiquitous, especially so in government and utilities.
@@ -170,50 +169,50 @@ ggplot() +
 
 Notice the subtle differences at the boundaries?
 
-Let's dive back into zip codes and this time bring along data on notices of intent to foreclosure by zip code (found at <https://opendata.maryland.gov/Housing/Maryland-Notices-of-Intent-to-Foreclose-by-Zip-Cod/ftsr-vapt>). Where are these foreclosure notices appearing?
+Let's dive back into zip codes and this time bring along data on COVID-19 cases by zip code, which the Maryland Department of Health published on the [state's open data portal](https://opendata.maryland.gov/Health-and-Human-Services/MD-COVID-19-Cases-by-ZIP-Code/ntd2-dqpx) during the pandemic. The file has one row for each zip code and one column for each day in 2022, holding the total number of cases reported in that zip code since the pandemic began. Where were the most cases?
 
-### Task: Run code to load the foreclosure notice data.
-
-**Task** Run the following code. Describe the output in the space below. **Answer**
-
-```{r}
-foreclosure_zip <- read_csv("data/Maryland_Notices_of_Intent_to_Foreclose_by_Zip_Code.csv") |> clean_names()
-foreclosure_zip_march_2023 <- foreclosure_zip |> 
-  select(zip, march_2023)
-
-View(foreclosure_zip_march_2023)
-```
-
-Now we can join the zip codes to the foreclosure data.
-
-### Task: Run code to join the zip code shapes with the foreclosure notice data
+### Task: Run code to load the COVID-19 case data.
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
 
 ```{r}
-zip_codes_with_foreclosures <- md_zips |> left_join(foreclosure_zip_march_2023, join_by(ZIPCODE1==zip))
+covid_zip <- read_csv("data/md_covid_cases_by_zip.csv") |> clean_names()
+covid_zip_2022 <- covid_zip |> 
+  select(zip_code, total12_30_2022) |> 
+  mutate(zip_code = as.character(zip_code))
+
+View(covid_zip_2022)
 ```
 
-Now we can use color to distinguish zip codes from each other. Let's use the number of foreclosure notices to start with:
+Notice that we used `mutate()` to turn `zip_code` into a character column. When R read the CSV, it decided zip codes were numbers, but the ZIPCODE1 column in our shapefile is text, and the join columns *must* be the same data type. Now we can join the zip codes to the COVID-19 data.
+
+### Task: Run code to join the zip code shapes with the COVID-19 case data
+
+**Task** Run the following code. Describe the output in the space below. **Answer**
+
+```{r}
+zip_codes_with_cases <- md_zips |> left_join(covid_zip_2022, join_by(ZIPCODE1==zip_code))
+```
+
+Now we can use color to distinguish zip codes from each other. Let's use the total number of cases through the end of 2022 to start with:
 
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
 
 ```{r}
-county_centroids <- st_centroid(zip_codes_with_foreclosures)
 
 ggplot() +
-  geom_sf(data=zip_codes_with_foreclosures, aes(fill=march_2023)) +
-  scale_colour_viridis_b(option="magma") +
+  geom_sf(data=zip_codes_with_cases, aes(fill=total12_30_2022)) +
+  scale_fill_viridis_b(option="magma") +
   theme_minimal()
 ```
 
-With these changes, what can we make out here? First, you can pretty easily spot zip codes with a high number of foreclosures - in Prince George's County in particular, along with zip codes around Baltimore and in places in the northeast and northwest parts of the state.
+With these changes, what can we make out here? You can pretty easily spot zip codes with a high number of cases - in Prince George's and Montgomery counties in particular, along with zip codes around Baltimore. But be careful: those are also the zip codes where the most people live. A map of raw counts often just shows you where the people are. To compare places fairly, we need a rate, which is what we'll do in the next chapter. Some zip codes are gray, too: those are zip codes with no match in the COVID-19 data, often because they're small, have few residents or are post office boxes.
 
 ## Chapter 21
 
-In the previous chapter, we looked at foreclosure notices by zip codes to find patterns in Maryland. Let's go further and, instead of using raw numbers, use percentages based on the number of owner-occupied housing units in each county.
+In the previous chapter, we looked at COVID-19 cases by zip codes to find patterns in Maryland. Let's go further and, instead of using raw numbers, use rates based on the population of each county.
 
 First, let's load the libraries we'll need. We're also going to load tidycensus and set an API key for tidycensus.
 
@@ -229,24 +228,24 @@ library(tidycensus)
 #census_api_key("YOUR API KEY HERE")
 ```
 
-For the rest of this chapter, we're going to work on building a map that will help us gain insight into geographic patterns in foreclosure notices by county in Maryland. What geographic patterns can we identify?
+For the rest of this chapter, we're going to work on building a map that will help us gain insight into geographic patterns in COVID-19 cases by county in Maryland. What geographic patterns can we identify?
 
-First, we'll go out and get the county foreclosure notices and population data for each county using tidycensus. The variable for total population is B01001_001
+First, we'll load the county COVID-19 case data and get population data for each county using tidycensus. The variable for total population is B01001_001. The case data has one row for each day from March 2020 until the state stopped updating it in 2025, and one column for each county, with the total number of cases reported since the pandemic began. We only want the latest totals, so we'll use `slice_tail()` to keep just the last row, then use `pivot_longer()` to turn the county columns into rows.
 
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
 
 ```{r}
-md_county_notices <- read_csv("data/Maryland_Foreclosure_Data_by_County.csv") |> slice(1) |> pivot_longer(cols=-c('Date', 'Type'), names_to='county', values_to = 'notices')
+md_county_cases <- read_csv("data/md_covid_cases_by_county.csv") |> slice_tail(n=1) |> pivot_longer(cols=-c('OBJECTID', 'DATE'), names_to='county', values_to = 'cases')
 
 md_county_population <- get_acs(geography = "county",
               variables = c(population = "B01001_001"),
-              year = 2021,
+              year = 2023,
               state = "MD")
 ```
 
-Ultimately, we're going to join this county table with population with foreclosure notices by county, and then calculate a percentage. But remember, we then want to visualize this data by drawing a zip code map that helps us pick out trends. Thinking ahead, we know we'll need a zip code map shapefile. Fortunately, we can pull this geometry information right from tidycensus at the same time that we pull in the population data by adding "geometry = TRUE" to our get_acs function.
+Ultimately, we're going to join this county table with population with COVID-19 cases by county, and then calculate a rate. But remember, we then want to visualize this data by drawing a county map that helps us pick out trends. Thinking ahead, we know we'll need a county map shapefile. Fortunately, we can pull this geometry information right from tidycensus at the same time that we pull in the population data by adding "geometry = TRUE" to our get_acs function.
 
 ### Task: Run code
 
@@ -255,7 +254,7 @@ Ultimately, we're going to join this county table with population with foreclosu
 ```{r}
 md_county_population <- get_acs(geography = "county",
               variables = c(population = "B01001_001"),
-              year = 2021,
+              year = 2023,
               state = "MD",
               geometry = TRUE)
 
@@ -264,9 +263,9 @@ md_county_population
 
 We now have a new column, geometry, that contains the "MULTIPOLYGON" data that will draw an outline of each county when we go to draw a map.
 
-The next step will be to join our population data to our foreclosure data on the county column.
+The next step will be to join our population data to our case data on the county column.
 
-But there's a problem. The column in our population data that has county names is called "NAME", and it has the full name of the county spelled out in title case -- first word capitalized and has "County" and "Maryland" in it. The foreclosure data just has the name of the county. For example, the population data has "Anne Arundel County, Maryland" and the foreclosure data has "Anne Arundel County".
+But there's a problem. The column in our population data that has county names is called "NAME", and it has the full name of the county with "County" and "Maryland" in it. The case data just has the name of the county, with underscores instead of spaces and no punctuation. For example, the population data has "Prince George's County, Maryland" and the case data has "Prince_Georges".
 
 ### Task: Run code
 
@@ -275,12 +274,12 @@ But there's a problem. The column in our population data that has county names i
 ```{r}
 md_county_population
 
-md_county_notices
+md_county_cases
 ```
 
 If they're going to join properly, we need to clean one of them up to make it match the other.
 
-Let's clean the population table. We're going to rename the "NAME" column to "county", then remove ", Maryland" and make the county titlecase. Next we'll remove any white spaces after that first cleaning step that, if left in, would prevent a proper join. We're also going to rename the column that contains the population information from "estimate" to "population" and select only the county name and the population columns, along with the geometry. That leaves us with this tidy table.
+Let's clean the population table. We're going to rename the "NAME" column to "county", then use `str_remove_all()` to remove " County, Maryland" or ", Maryland" and any apostrophes or periods, and make the county titlecase (so that "Baltimore city" becomes "Baltimore City"). Next we'll replace the spaces with underscores so the names match the case data exactly. We're also going to rename the column that contains the population information from "estimate" to "population" and select only the county name and the population columns, along with the geometry. That leaves us with this tidy table.
 
 ### Task: Run code
 
@@ -289,8 +288,8 @@ Let's clean the population table. We're going to rename the "NAME" column to "co
 ```{r}
 md_county_population <- md_county_population |>
   rename(county = NAME) |>
-  mutate(county = str_to_title(str_remove_all(county,", Maryland"))) |>
-  mutate(county = str_trim(county,side="both")) |>
+  mutate(county = str_to_title(str_remove_all(county, " County, Maryland|, Maryland|'|\\."))) |>
+  mutate(county = str_replace_all(county, " ", "_")) |>
   rename(population = estimate) |>
   select(county, population, geometry)
 
@@ -304,30 +303,30 @@ Now we can join them!
 **Task** Run the following code. Describe the output in the space below. **Answer**
 
 ```{r}
-md_pop_with_foreclosures <- md_county_population |>
-  left_join(md_county_notices, join_by(county))
+md_pop_with_cases <- md_county_population |>
+  left_join(md_county_cases, join_by(county))
 
-md_pop_with_foreclosures
+md_pop_with_cases
 ```
 
-Our final step before visualization, let's calculate the number of foreclosure notices per 1000 population and sort from highest to lowest to see what trends we can identify just from the table.
+Our final step before visualization, let's calculate the number of cases per 1,000 people and sort from highest to lowest to see what trends we can identify just from the table.
 
 ### Task: Run code
 
 **Task** Run the following code. Describe the output in the space below. **Answer**
 
 ```{r}
-md_pop_with_foreclosures <- md_county_population |>
-  left_join(md_county_notices, join_by(county)) |> 
-  mutate(rate = notices/population*1000) |>
+md_pop_with_cases <- md_county_population |>
+  left_join(md_county_cases, join_by(county)) |> 
+  mutate(rate = cases/population*1000) |>
   arrange(desc(rate))
 
-md_pop_with_foreclosures
+md_pop_with_cases
 ```
 
-Let's take a look at the result of this table. The variances in the rates aren't huge, but there are some clear differences: Charles County and Prince George's County have higher rates, followed by Baltimore City and some more rural counties.
+Let's take a look at the result of this table. Allegany County, in far western Maryland, had the highest rate of reported cases -- about 373 for every 1,000 residents -- followed by Dorchester and Garrett counties. Carroll and Calvert counties had the lowest. Keep in mind what this data measures: *reported* cases. Once home tests became common in 2022, many people who tested positive never reported it, so these numbers undercount how many people actually got sick, and the undercount may not be the same everywhere.
 
-Okay, now let's visualize. We're going to build a choropleth map, with the color of each county -- the fill -- set according to the number of notices per 1K population on a color gradient.
+Okay, now let's visualize. We're going to build a choropleth map, with the color of each county -- the fill -- set according to the number of cases per 1,000 people on a color gradient.
 
 ### Task: Run code
 
@@ -340,7 +339,7 @@ county_centroids_df <- as.data.frame(st_coordinates(county_centroids))
 county_centroids_df$NAME <- county_centroids$NAME
 
 ggplot() +
-  geom_sf(data=md_pop_with_foreclosures, aes(fill=rate)) +
+  geom_sf(data=md_pop_with_cases, aes(fill=rate)) +
   geom_text(aes(x = X, y = Y, label = NAME), data = county_centroids_df, size = 3, check_overlap = TRUE) +
   theme_minimal()
 ```
@@ -353,7 +352,7 @@ This map is okay, but the color scale makes it hard to draw fine-grained differe
 
 ```{r}
 ggplot() +
-  geom_sf(data=md_pop_with_foreclosures, aes(fill=rate)) +
+  geom_sf(data=md_pop_with_cases, aes(fill=rate)) +
   theme_minimal() +
   scale_fill_viridis_b(option="magma")
 ```
@@ -368,7 +367,7 @@ So let's change the color scale to a "log" scale, which will help us see those d
 
 ```{r}
 ggplot() +
-  geom_sf(data=md_pop_with_foreclosures, aes(fill=rate)) +
+  geom_sf(data=md_pop_with_cases, aes(fill=rate)) +
   theme_minimal() +
   scale_fill_viridis_b(option="magma",trans = "log")
 ```

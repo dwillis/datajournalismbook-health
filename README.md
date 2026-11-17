@@ -28,3 +28,15 @@ GROQ_API_KEY=...
 ## Labs
 
 `labs/` and `pre_labs/` hold class assignments. They are not part of the website build.
+
+## Data
+
+Every chapter, pre-lab and lab uses health data. The files in `data/` (and the copies in each pre-lab and lab `data/` folder) are snapshots made by the scripts in `scripts/`:
+
+- `scripts/fetch_data.R` downloads the source datasets: Medicare Part D prescribers and Open Payments (CMS), health agency grants and the State Health Improvement Plan and COVID-19 data (Maryland open data portal), nursing homes (CMS), vaccination data (CDC), food recalls (openFDA) and FDA warning letters. Run `Rscript scripts/fetch_data.R` for everything, or name sources: `Rscript scripts/fetch_data.R partd ship`.
+- Open Payments is large and its API is rate-limited. The faster route is to stream CMS's national file through a Maryland filter first, then run the fetch script, which uses the filtered file:
+  `curl -s <bulk CSV URL> | python3 -I scripts/filter_open_payments.py data-raw/open_payments_md_2025.csv`
+- `scripts/extract_kindergarten.R` turns the MDH kindergarten immunization PDFs in `pdfs/kindergarten/` (recovered from the Wayback Machine) into CSVs.
+- `scripts/build_state_vax.R` and `scripts/build_viz_data.R` build the smaller derived files used for statistics, Datawrapper and mapping.
+
+Refreshing the data changes the answers to lab questions, so re-check the labs after any refresh. Raw downloads are cached in `data-raw/`, which is not committed.

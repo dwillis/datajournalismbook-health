@@ -4,13 +4,11 @@ title: "Sorting and filtering to find stories"
 
 ## A sorting miracle
 
-When Stephen Neukam - who was sitting in this class a year ago - wanted to find out who was funding candidates for Maryland's open governor's seat this year, he downloaded data from the State Board of Elections that listed contributions to the wide array of hopefuls seeking to replace Larry Hogan in Annapolis.
+In 2010, reporters at ProPublica wanted to know how much money drug companies were paying doctors to promote their products -- giving talks to other doctors over dinner, consulting and traveling to meetings. A handful of companies had started posting those payments online, each in its own format, so the reporters collected the lists into a single database they called "Dollars for Docs."
 
-He wasn't sure at first what he was looking for, so he started the way that many reporters do with data: by sorting and filtering. Were there outliers in the list of contributions, and which candidates were getting their money from unusual (non-Maryland) sources?
+They weren't sure at first what they were looking for, so they started the way that many reporters do with data: by sorting and filtering. Who received the most money? Were there doctors on the lists who stood out for some other reason?
 
-Neukam quickly found his story: in the race to be governor, Maryland candidates, and in particular Wes Moore, a first-time Democratic candidate, were raising millions of dollars from out of state donors.
-
-The story, "[Millions in out-of-state donations help fuel high-profile Maryland Democratic governor candidates](https://cnsmaryland.org/2022/03/03/millions-in-out-of-state-donations-help-fuel-high-profile-maryland-democratic-governor-candidates/)" helped explain where candidates were going to fund one of the most contested primaries in recent history (Moore ended up winning).
+One of the things they found by working through the lists was that some of the doctors the companies paid to speak on their behalf had been disciplined by state medical boards. The project led to dozens of stories by ProPublica and its partners, and the federal government now publishes these payments for every drug and medical device company in the Open Payments database -- which is where the data for this tutorial comes from.
 
 ## Sorting and filtering as a reporting tool
 
@@ -22,25 +20,24 @@ Sorting and filtering can:
 
 ## Example data
 
-::: {.alert .alert-info } - [Data from the State Board of Elections](https://github.com/stephenneukam/CNS_Annapolis/tree/main/Campaign_finance) for use in this tutorial - [Documentation from the SBOE's site](https://campaignfinance.maryland.gov/Public/ViewReceiptsMain) :::
+::: {.alert .alert-info }
+- [Data from Open Payments](https://openpaymentsdata.cms.gov/) for use in this tutorial: [`md_open_payments_2025_sheets.csv`](data/md_open_payments_2025_sheets.csv)
+- [Documentation from Open Payments](https://www.cms.gov/priorities/key-initiatives/open-payments/data/dataset-downloads)
+:::
 
--   The data for this is from the Maryland State Board of Elections's Campaign Finance Database. There are a couple of caveats:
+-   The data for this is from the federal Centers for Medicare & Medicaid Services' Open Payments database. It includes every payment that drug and medical device companies reported making in 2025 to doctors, nurse practitioners, physician assistants and teaching hospitals in Maryland, except for food and beverages -- which are the vast majority of payments but a small share of the money. There are a couple of caveats:
+-   The payments are reported by the companies, not by the people who received them. Recipients can dispute them, and companies can correct them.
+-   It doesn't include everyone: some kinds of health care providers aren't covered by the law that created the database.
 
--   It includes money raised as of Jan. 12, 2022, which covers all of 2021.
+Download the CSV file to your computer and then, in a browser, type sheet.new to create a new Google Sheet. From there, use File -> Import and choose "Upload" and select the file on your computer. Click the "Import Data" button when it appears. Then give your sheet a name, like "Maryland Open Payments 2025". (The screenshots in this chapter come from an earlier version that used campaign contribution data, so the columns you see will be different.)
 
--   These are self-reported by campaigns, and subject to amendment in case of errors or omissions.
-
-[^xl-filter-sort-1]: Finding these is something that's pretty hard in a spreadsheet but will be really easy in R.
-
-The original data download link for Wes Moore's contributions is <https://github.com/stephenneukam/CNS_Annapolis/raw/main/Campaign_finance/Moore_ContributionsList.csv>. Download it to your computer and then, in a browser, type sheet.new to create a new Google Sheet. From there, use File -> Import and choose "Upload" and select the file on your computer. Click the "Import Data" button when it appears. Then give your sheet a name, like "Wes Moore Contributions".
-
-It's a good example set for us because it's been used as the basis of Neukam's story and it has at least one of each *data type* that we plan to deal with in Google Sheets or Excel. And, critically, the first row contains headers, not data. Always have headers, even if you have to add them.
+It's a good example set for us because it's the kind of data reporters use for stories about the influence of drug and device companies, and it has at least one of each *data type* that we plan to deal with in Google Sheets or Excel. And, critically, the first row contains headers, not data. Always have headers, even if you have to add them.
 
 ## Understanding data types
 
-When you open the spreadsheet, the first thing to notice is its [*granularity*](start-data-def.html). Unlike Census or budget spreadsheets, this is a list capturing specific characteristics of each contribution. Each column has the same *type* of data from top to bottom. Those types are:
+When you open the spreadsheet, the first thing to notice is its [*granularity*](start-data-def.html). Unlike Census or budget spreadsheets, this is a list capturing specific characteristics of each payment. Each column has the same *type* of data from top to bottom. Those types are:
 
--   **Text**. Text or "character" columns can come in long or short form. When they are standardized (the values can contain only one of a small list of values), they're called "categorical". If they're more free-form, they're might be called "free text". The computer doesn't know the difference, but you should. The Post data has examples of both. In spreadsheets, text is left-justified (they move toward the left of the cell and will line up vertically at the beginning)
+-   **Text**. Text or "character" columns can come in long or short form. When they are standardized (the values can contain only one of a small list of values), they're called "categorical". If they're more free-form, they're might be called "free text". The computer doesn't know the difference, but you should. The Open Payments data has examples of both: `Nature of Payment` is categorical, while `Recipient Name` is free text. In spreadsheets, text is left-justified (they move toward the left of the cell and will line up vertically at the beginning)
 
 -   **Numbers**. These are pure numbers with no commas, dollar signs or other embellishments. In Google Sheets these can be formatted to *look* like numbers in different ways, but underneath they're just numbers. Adding up a column of numbers that has a word in it or has missing values will just be ignored. It will trip up most other languages. These are right-justified, so the last digit is always lined up vertically.
 
@@ -64,13 +61,13 @@ It also means that you can compute 911 response times even when it crosses midni
 
 Sorting means rearranging the rows of a data table into a different order. Some reporters take a conceptual shortcut and call this "sorting columns". That thinking will only get you into trouble -- it lets you forget that you want to keep the rows in tact while changing the order in which you see them. In fact, in other languages it's called "order by" or "arrange" by one or more columns -- a much clearer way to think of it.
 
-To sort in Google Sheets, first highlight the entire sheet by clicking on the button above the first row and to the left of the first column. So, between the 1 and the A. Then, look for the sort options under the Data drop-down menu at the top of your screen, and choose "Sort Range" and then "Advanced range sorting options". Trust me, this is how you want to do it. Check the box that says "Data has header row" and Sort by Contribution Date. In this case, sorting from A to Z gives you a list of the contributions in chronological order.
+To sort in Google Sheets, first highlight the entire sheet by clicking on the button above the first row and to the left of the first column. So, between the 1 and the A. Then, look for the sort options under the Data drop-down menu at the top of your screen, and choose "Sort Range" and then "Advanced range sorting options". Trust me, this is how you want to do it. Check the box that says "Data has header row" and Sort by Date of Payment. In this case, sorting from A to Z gives you a list of the payments in chronological order.
 
 ![](images/sheets-filter-sort-sortbox.png){width="80%"}
 
 #### Adding fields to the sort {.unnumbered}
 
-Adding more columns to the sort box tells Sheets what to do when the first one is the same or tied. For example, sorting first by date then by amount gives you a list that shows all of the contributions by date in sequence:
+Adding more columns to the sort box tells Sheets what to do when the first one is the same or tied. For example, sorting first by date then by amount gives you a list that shows all of the payments by date in sequence, with the biggest payments each day at the top or bottom:
 
 ![](images/sheets-filter-sort-date.png){width="50%"}
 
@@ -80,7 +77,7 @@ Filtering means picking out only some of the rows you want to see based on a cri
 
 To turn on filters in Google Sheets, go to Data -> Create a filter. It will add small down arrows to each column in the first row, another reason why headers are crucial. You can filter by multiple columns, and each filter you select adds more conditions, narrowing your net.
 
-To find contributions of $5,000, use the drop-down menu under `Contribution Amount` to select it and hit "OK".
+To find consulting fees, use the drop-down menu under `Nature of Payment` to select "Consulting Fee" and hit "OK".
 
 When you do this, notice that the drop-down arrow has turned into a solid green funnel and that any rows that don't match your filter are hidden.
 
@@ -90,7 +87,7 @@ When you do this, notice that the drop-down arrow has turned into a solid green 
 This method works for small-ish and simple-ish columns. If your column has more than 10,000 different entries, such as names or addresses, only the first 10,000 will be considered. We only caught these for stories when someone did a fact-check using a different method of filtering. If your column has a lot of distinct entries, use option that says "Choose One", and then use the "Contains" option. Better yet, don't use filtering for counting things at all.
 :::
 
-Add more filters to narrow down your list of cases even more. For example, if you wanted to see $5,000 contributions from individuals, you would choose "Individual" under Contributor Type:
+Add more filters to narrow down your list of cases even more. For example, if you wanted to see consulting fees paid to physicians, you would also choose "Physician" under Recipient Type:
 
 
 ![](images/sheets-filter-sort-twofilters.png)

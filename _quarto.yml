@@ -38,6 +38,9 @@ project:
     - writingwithdata.qmd
   resources:
     - pdfs/
+    # CSVs linked from the spreadsheet chapters
+    - data/md_open_payments_2025_sheets.csv
+    - data/md_intoxication_deaths_2014_2016.csv
 
 # Code runs only when you render locally and a page's source has changed.
 # Results are stored in _freeze/, which is committed so CI never executes R.
@@ -46,8 +49,8 @@ execute:
 
 website:
   title: "Data Journalism with R and the Tidyverse"
-  description: "Code, data and visuals for storytellers"
-  repo-url: https://github.com/dwillis/datajournalismbook-maryland
+  description: "Code, data and visuals for health storytellers"
+  repo-url: https://github.com/dwillis/datajournalismbook-health
   repo-actions: [issue]
   page-navigation: true
   search: true
@@ -57,7 +60,7 @@ website:
         text: Home
     right:
       - icon: github
-        href: https://github.com/dwillis/datajournalismbook-maryland
+        href: https://github.com/dwillis/datajournalismbook-health
         aria-label: GitHub
   sidebar:
     style: docked

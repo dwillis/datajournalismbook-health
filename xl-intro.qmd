@@ -20,4 +20,4 @@ Spreadsheets in the form of Google Sheets or Excel are used in almost every work
 
 ## Practice exercises
 
--   [Practice with "notice of claims" from Phoenix](xl-practice-noc.html): Filtering and pivot table practice using claims made against the city of Phoenix 2010-2020.
+-   [Practice with Open Payments](xl-practice-noc.html): Filtering and pivot table practice using payments from drug and medical device companies to Maryland health care providers in 2025.

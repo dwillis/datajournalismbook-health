@@ -18,20 +18,20 @@ library(tidyverse)
 library(janitor)
 ```
 
-Let's continue with our Maryland grants and loans data that we worked with in the previous chapter.
+Let's continue with the Maryland health grants data that we worked with in the previous chapter: grants from the state health department (called the Department of Health and Mental Hygiene until 2017), the Maryland Community Health Resources Commission, the Department of Aging and the state's Stem Cell Research Fund.
 
 ```{r}
-md_grants_loans <- read_csv("data/State_of_Maryland_Grant_and_Loan_Data__FY2009_to_FY2022_20250115.csv")
+md_health_grants <- read_csv("data/md_health_grants.csv")
 ```
 
 There are a number of issues with this data set that might get in the way of asking questions and receiving accurate answers. They are:
 
 -   The column names have spaces in them. This isn't a deal-breaker, as we used this dataframe previously. But it does require that you do some things differently when writing code, and ideally you don't want spaces in your column names.
 -   Inconsistent capitalization across multiple columns. Sometimes the grantee is capitalized, and other times not. Portions of the grantor name are sometimes capitalized. This issue will ruin your ability to count and add things using those columns.
--   The zip field mixes five digit ZIP codes and nine digit ZIP codes, and some of the records include spaces. If we wanted to group and count the number of loans in a given ZIP code, this inconsistency would not let us do that correctly.
--   The category column is inconsistent and has some missing values.
+-   The zip field mixes five digit ZIP codes, nine digit ZIP codes and a few that are only four digits long. If we wanted to group and count the number of grants in a given ZIP code, this inconsistency would not let us do that correctly.
+-   The same agency is described in many different ways in the grantor column, partly because the health department changed its name in 2017.
 
-Let's get cleaning. Our goal will be to build up one block of code that does all the necessary cleaning in order to answer this question: which zip code has gotten the most amount of money from the Maryland Tourism Board?
+Let's get cleaning. Our goal will be to build up one block of code that does all the necessary cleaning in order to answer this question: which zip code has gotten the most amount of money from the Maryland Community Health Resources Commission, which gives grants to community health clinics and programs that serve low-income and uninsured residents?
 
 ## Cleaning headers
 
@@ -45,23 +45,23 @@ The `janitor` library makes fixing headers trivially simple with the function `c
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names()
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 This function changed `Zip Code` to `zip_code` and generally got rid of capital letters and replaced spaces with underscores. If we wanted to rename a column, we can use a tidyverse function `rename()` to do that. Let's change `grantor` to `source` as an example. NOTE: when using `rename()`, the *new* name comes first.
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor)
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 ## Changing capitalization
@@ -70,13 +70,13 @@ Right now the `source`, `grantee` and `description` columns have inconsistent ca
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor) |> 
   mutate(source = str_to_upper(source), grantee = str_to_upper(grantee), description = str_to_upper(description))
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 What this does is make it so that using `group_by` will result in fewer rows due to inconsistent capitalization. It won't fix misspellings, but working off a single case style definitely helps.
@@ -90,35 +90,35 @@ So the question is, do we have any records repeated?
 Here we'll use a function called `get_dupes` from the janitor library to check for fully repeated records in our cleaned data set.
 
 ```{r}
-cleaned_md_grants_loans |>
+cleaned_md_health_grants |>
   get_dupes()
 ```
 
-And the answer is ... maybe? Because the original dataset doesn't have a unique identifier for each grant, it's *possible* that we have duplicates here, as many as 58. If we could confirm that these actually are duplicates, we can fix this by adding the function `distinct()` to our cleaning script. This will keep only one copy of each unique record in our table. But we'd need to confirm that first.
+And the answer is ... maybe? Because the original dataset doesn't have a unique identifier for each grant, it's *possible* that we have duplicates here: two pairs of rows that are identical in every column. An agency might legitimately make two grants of the same amount to the same organization in the same period, so this isn't proof of an error. If we could confirm that these actually are duplicates, we can fix this by adding the function `distinct()` to our cleaning script. This will keep only one copy of each unique record in our table. But we'd need to confirm that first.
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor) |> 
   mutate(source = str_to_upper(source), grantee = str_to_upper(grantee), description = str_to_upper(description)) |> 
   distinct()
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 ## Cleaning strings
 
 The rest of the problems with this data set all have to do with inconsistent format of values in a few of the columns. To fix these problems, we're going to make use of mutate() in concert with "string functions" -- special functions that allow us to clean up columns stored as character strings. The tidyverse package `stringr` has lots of useful string functions, more than we'll learn in this chapter.
 
-Let's start by cleaning up the zip field. Remember, some of the rows had a five-digit ZIP code, while others had a nine-digit ZIP code, separated by a hyphen or not.
+Let's start by cleaning up the zip field. Remember, some of the rows had a five-digit ZIP code, while others had a nine-digit ZIP code with a hyphen, and a few had only four digits.
 
 We're going to write code that tells R to make a new column for our zips, keeping the first five digits on the left, and get rid of anything after that by using `mutate()` in concert with `str_sub()`, from the `stringr` package.
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor) |> 
   mutate(source = str_to_upper(source), grantee = str_to_upper(grantee), description = str_to_upper(description)) |> 
@@ -127,66 +127,68 @@ cleaned_md_grants_loans <- md_grants_loans |>
 
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 Let's break down that last line of code. It says: take the value in each zip column and extract the first character on the left (1L) through the fifth character on the left (5L), and then use that five-digit zip to populate a new zip5 column.
 
-If we arrange the zip5 column we can see that there are some non-digits in there, so let's make those NA. For that, we're going to use `case_when()`, a function that let's us say if a value meets a certain condition, then change it, and if it doesn't, don't change it.
+If we arrange the zip5 column we can see that there are some values that aren't five digits long -- "2111" and "4915", for example. A Maryland ZIP code starts with 20 or 21, so we can't be sure what those were supposed to be. Let's make those NA. For that, we're going to use `case_when()`, a function that let's us say if a value meets a certain condition, then change it, and if it doesn't, don't change it.
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor) |> 
   mutate(source = str_to_upper(source), grantee = str_to_upper(grantee), description = str_to_upper(description)) |> 
   distinct() |>
   mutate(zip5 = str_sub(zip_code, start=1L, end=5L)) |>
   mutate(zip5 = case_when(
-    zip5 == "Vario" ~ NA,
-    zip5 == "UB7 O" ~ NA,
-    zip5 == "UB7 " ~ NA,
+    zip5 == "2111" ~ NA,
+    zip5 == "2241" ~ NA,
+    zip5 == "2421" ~ NA,
+    zip5 == "4915" ~ NA,
     .default = zip5
   ))
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
 That last bit is a little complex, so let's break it down.
 
-What the code above says, in English, is this: Look at all the values in the zip5 column. If the value is "Vario", then (that's what the "\~" means, then) replace it with NA. Same for the other variations. If it's anything other than that (that's what "TRUE" means, otherwise), then keep the existing value in that column.
+What the code above says, in English, is this: Look at all the values in the zip5 column. If the value is "2111", then (that's what the "\~" means, then) replace it with NA. Same for the other variations. If it's anything other than that (that's what "TRUE" means, otherwise), then keep the existing value in that column.
 
 Instead of specifying the exact value, we can also solve the problem by using something more generalizable, using a function called str_detect(), which allows us to search parts of words.
 
-The second line of our case_when() function below now says, in English: look in the city column. If you find that one of the values starts with "UB7" (the "\^" symbol means "starts with"), then (the tilde \~ means then) change it to NA.
+The line in our case_when() function below now says, in English: look in the zip5 column. If a value is *not* made up of exactly five digits, then (the tilde \~ means then) change it to NA. The pattern "\^[0-9]{5}\$" is a regular expression: the "\^" means "starts with," "[0-9]{5}" means "five digits" and the "\$" means "ends with." The exclamation point in front of str_detect() means "not."
 
 ```{r}
 # cleaning function
-cleaned_md_grants_loans <- md_grants_loans |>
+cleaned_md_health_grants <- md_health_grants |>
   clean_names() |> 
   rename(source = grantor) |> 
   mutate(source = str_to_upper(source), grantee = str_to_upper(grantee), description = str_to_upper(description)) |> 
   distinct() |>
   mutate(zip5 = str_sub(zip_code, start=1L, end=5L)) |>
   mutate(zip5 = case_when(
-    zip5 == "Vario" ~ NA,
-    str_detect(zip5, "^UB7") ~ NA,
+    !str_detect(zip5, "^[0-9]{5}$") ~ NA,
     .default = zip5
   ))
 
 # display the cleaned dataset
-cleaned_md_grants_loans
+cleaned_md_health_grants
 ```
 
-We've gotten the source and zip code data as clean as we can, and now we can answer our question: which zip code has gotten the most amount of money from the Maryland Tourism Board? A good rule of thumb is that you should only spend time cleaning fields that are critical to the specific analysis you want to do.
+We've gotten the source and zip code data as clean as we can, and now we can answer our question: which zip code has gotten the most amount of money from the Maryland Community Health Resources Commission? A good rule of thumb is that you should only spend time cleaning fields that are critical to the specific analysis you want to do.
+
+There's one more wrinkle. Even after we made it all uppercase, the commission's name appears in the source column in nine different ways -- "MARYLAND COMMUNITY HEALTH RESOURCES COMMISSION", "DEPARTMENT OF HEALTH AND MENTAL HYGIENE/MD COMMUNITY HEALTH RESOURCES COMMISSION", "MARYLAND DEPARTMENT OF HEALTH/COMMUNITY HEALTH RESOURCE COMMISSION" and so on. If we filtered for an exact match on any one of them, we'd miss most of the money. Instead, we'll use str_detect() to find any source that contains "COMMUNITY HEALTH RESOURCE", which catches both "RESOURCE" and "RESOURCES".
 
 ```{r}
-cleaned_md_grants_loans |> 
-  filter(source == 'COMMERCE/MARYLAND TOURISM BOARD') |> 
+cleaned_md_health_grants |> 
+  filter(str_detect(source, "COMMUNITY HEALTH RESOURCE")) |> 
   group_by(zip5) |> 
   summarize(total_amount = sum(amount)) |> 
   arrange(desc(total_amount))
 ```
 
-Why, it's [downtown Baltimore, including the Inner Harbor area](https://censusreporter.org/profiles/86000US21202-21202/).
+It's [21205, in East Baltimore](https://censusreporter.org/profiles/86000US21205-21205/), home to the Johns Hopkins Hospital medical campus and a number of community health organizations -- followed closely by 21201, on the west side of downtown, home to the University of Maryland's medical campus.

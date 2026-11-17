@@ -60,7 +60,7 @@ Students currently work in R Markdown notebooks where they:
 - Final reflection questions (like Task 16 in pre-lab 2)
 
 **Example structure**:
-1. Introduction: "I analyzed Maryland campaign expenditure data and discovered..."
+1. Introduction: "I analyzed payments from drug companies to Maryland doctors and discovered..."
 2. Key finding: "The most surprising pattern was..."
 3. Methodology note: "I used mutate and group_by to..."
 4. Implications: "This matters because..."
@@ -93,7 +93,7 @@ Students currently work in R Markdown notebooks where they:
 ```r
 # Interactive table
 library(DT)
-datatable(maryland_expenses, filter = 'top')
+datatable(md_payments, filter = 'top')
 
 # Interactive chart
 library(plotly)
@@ -230,9 +230,9 @@ Methodology: [How the analysis was conducted]
 
 **Example**:
 ```
-🧵 Thread: What I learned analyzing MD campaign spending data
+🧵 Thread: What I learned analyzing drug company payments to MD doctors
 
-1/ I analyzed $X million in Maryland campaign expenditures
+1/ I analyzed $X million in drug company payments to Maryland health care providers
 from 2022. Here's what stood out... [visualization]
 
 2/ The biggest surprise: 65% of spending went to vendors

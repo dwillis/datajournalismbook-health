@@ -20,23 +20,23 @@ library(tidyverse)
 library(lubridate)
 ```
 
-Let's start with a dataset of campaign expenses from Maryland political committees:
+Let's start with a dataset of 2025 payments from drug and medical device companies to Maryland health care providers, from the federal Open Payments database. It's a big file -- more than 300,000 payments -- so it's been compressed; `read_csv()` can read compressed .gz files directly:
 
 ```{r}
-maryland_expenses <- read_csv("data/maryland_expenses.csv")
+md_payments <- read_csv("data/md_open_payments_2025.csv.gz")
 
-head(maryland_expenses)
+head(md_payments)
 ```
 
-Take a look at that first column, expenditure_date. It *looks* like a date, but see the `<chr` right below the column name? That means R thinks it's actually a character column. What we need to do is make it into an actual date column, which lubridate is very good at doing. It has a variety of functions that match the format of the data you have. In this case, the current format is `m/d/y`, and the lubridate function is called `mdy` that we can use with mutate:
+Take a look at the second column, date_of_payment. It *looks* like a date, but see the `<chr` right below the column name? That means R thinks it's actually a character column. What we need to do is make it into an actual date column, which lubridate is very good at doing. It has a variety of functions that match the format of the data you have. In this case, the current format is `m/d/y`, and the lubridate function is called `mdy` that we can use with mutate:
 
 ```{r}
-maryland_expenses <- maryland_expenses |> mutate(expenditure_date=mdy(expenditure_date))
+md_payments <- md_payments |> mutate(date_of_payment=mdy(date_of_payment))
 
-head(maryland_expenses)
+head(md_payments)
 ```
 
-Now look at the expenditure_date column: R says it's a date column and it looks like we want it to: YYYY-MM-DD. Accept no substitutes.
+Now look at the date_of_payment column: R says it's a date column and it looks like we want it to: YYYY-MM-DD. Accept no substitutes.
 
 Lubridate has functions for basically any type of character date format: mdy, ymd, even datetimes like ymd_hms.
 
@@ -50,18 +50,18 @@ Fortunately, `readr` anticipates some date formatting and can automatically hand
 
 But you're not done with lubridate yet. It has some interesting pieces parts we'll use elsewhere.
 
-For example, in spreadsheets you can extract portions of dates - a month, day or year - with formulas. You can do the same in R with lubridate. Let's say we wanted to add up the total amount spent in each month in our Maryland expenses data.
+For example, in spreadsheets you can extract portions of dates - a month, day or year - with formulas. You can do the same in R with lubridate. Let's say we wanted to add up the total amount paid in each month in our payments data.
 
 We could use formatting to create a Month field but that would group all the Aprils ever together. We could create a year and a month together, but that would give us an invalid date object and that would create problems later. Lubridate has something called a floor date that we can use.
 
 So to follow along here, we're going to use mutate to create a month field, group by to lump them together, summarize to count them up and arrange to order them. We're just chaining things together.
 
 ```{r}
-maryland_expenses |>
-  mutate(month = floor_date(expenditure_date, "month")) |>
+md_payments |>
+  mutate(month = floor_date(date_of_payment, "month")) |>
   group_by(month) |>
   summarise(total_amount = sum(amount)) |>
   arrange(desc(total_amount))
 ```
 
-So the month of June 2022 had the most expenditures by far in this data.
+So the month of July 2025 had the most money paid by far in this data -- more than three times as much as any other month. Is that a pattern, like companies paying for a big medical conference? Sort the payments by amount and you'll see that it's mostly a single payment: more than \$20 million from a medical device company to one Maryland physician, listed as an "Acquisition" -- the kind of payment a company makes when it buys a business or technology a doctor helped create. One huge payment can make a monthly total misleading, which is why you should always look at the individual records behind a big number.

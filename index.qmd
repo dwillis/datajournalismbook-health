@@ -15,7 +15,7 @@ body-classes: home
 [Philip Merrill College of Journalism, University of Maryland]{.affiliation}
 :::
 
-Code, data and visuals for storytellers. This site holds the readings for JOUR472 and JOUR772, which teach how to find, clean, analyze and visualize data for journalism using R and the Tidyverse.
+Code, data and visuals for storytellers. This site holds the readings for JOUR472 and JOUR772, which teach how to find, clean, analyze and visualize data for journalism using R and the Tidyverse. Every example uses health data: prescriptions and payments to doctors, vaccination rates, overdoses, COVID-19, nursing homes and more.
 
 [Start with the introduction](introduction.qmd){.btn .btn-primary .btn-lg role="button"}
 

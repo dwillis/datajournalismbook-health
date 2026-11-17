@@ -38,7 +38,7 @@ More often than not, you'll be dealing with a shapefile. But a shapefile isn't j
 
 The data we're going to be working with is a Shapefile of Maryland zip codes from the [state's GIS data catalog](https://data.imap.maryland.gov/datasets/38f3f8bc61bb4261b59d71b3642e3cd6_3/explore?location=38.810313%2C-77.268250%2C8.83).
 
-Similar to `readr`, the `sf` library has functions to read geographic data. In this case, we're going to use `st_read` to read in our hospitals data. And then glimpse it to look at the columns.
+Similar to `readr`, the `sf` library has functions to read geographic data. In this case, we're going to use `st_read` to read in our zip code data. And then glimpse it to look at the columns.
 
 ```{r}
 md_zips <- st_read("data/md_zips/BNDY_ZIPCodes11Digit_MDP.shp")
@@ -119,29 +119,29 @@ ggplot() +
 
 Notice the subtle differences at the boundaries?
 
-Let's dive back into zip codes and this time bring along data on notices of intent to foreclosure by zip code (found at https://opendata.maryland.gov/Housing/Maryland-Notices-of-Intent-to-Foreclose-by-Zip-Cod/ftsr-vapt). Where are these foreclosure notices appearing?
+Let's dive back into zip codes and this time bring along data on COVID-19 cases by zip code, which the Maryland Department of Health published on the [state's open data portal](https://opendata.maryland.gov/Health-and-Human-Services/MD-COVID-19-Cases-by-ZIP-Code/ntd2-dqpx) during the pandemic. The file has one row for each zip code and one column for each day in 2022, holding the total number of cases reported in that zip code since the pandemic began. Where were the most cases?
 
 ```{r}
-foreclosure_zip <- read_csv("data/Maryland_Notices_of_Intent_to_Foreclose_by_Zip_Code.csv") |> clean_names()
-foreclosure_zip_march_2023 <- foreclosure_zip |> 
-  select(zip, march_2023)
+covid_zip <- read_csv("data/md_covid_cases_by_zip.csv") |> clean_names()
+covid_zip_2022 <- covid_zip |> 
+  select(zip_code, total12_30_2022) |> 
+  mutate(zip_code = as.character(zip_code))
 ```
 
-Now we can join the zip codes to the foreclosure data.
+Notice that we used `mutate()` to turn `zip_code` into a character column. When R read the CSV, it decided zip codes were numbers, but the ZIPCODE1 column in our shapefile is text, and the join columns *must* be the same data type. Now we can join the zip codes to the COVID-19 data.
 
 ```{r}
-zip_codes_with_foreclosures <- md_zips |> left_join(foreclosure_zip_march_2023, join_by(ZIPCODE1==zip))
+zip_codes_with_cases <- md_zips |> left_join(covid_zip_2022, join_by(ZIPCODE1==zip_code))
 ```
 
-Now we can use color to distinguish zip codes from each other. Let's use the number of foreclosure notices to start with:
+Now we can use color to distinguish zip codes from each other. Let's use the total number of cases through the end of 2022 to start with:
 
 ```{r}
-county_centroids <- st_centroid(zip_codes_with_foreclosures)
 
 ggplot() +
-  geom_sf(data=zip_codes_with_foreclosures, aes(fill=march_2023)) +
-  scale_colour_viridis_b(option="magma") +
+  geom_sf(data=zip_codes_with_cases, aes(fill=total12_30_2022)) +
+  scale_fill_viridis_b(option="magma") +
   theme_minimal()
 ```
 
-With these changes, what can we make out here? First, you can pretty easily spot zip codes with a high number of foreclosures - in Prince George's County in particular, along with zip codes around Baltimore and in places in the northeast and northwest parts of the state.
+With these changes, what can we make out here? You can pretty easily spot zip codes with a high number of cases - in Prince George's and Montgomery counties in particular, along with zip codes around Baltimore. But be careful: those are also the zip codes where the most people live. A map of raw counts often just shows you where the people are. To compare places fairly, we need a rate, which is what we'll do in the next chapter. Some zip codes are gray, too: those are zip codes with no match in the COVID-19 data, often because they're small, have few residents or are post office boxes.

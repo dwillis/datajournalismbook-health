@@ -195,31 +195,48 @@ arrange(md20, desc(estimate))
 
 In this case we don't save the sorted results to a variable, we can just see the output in the console.
 
-## Combining with Other Data
+## Health Data in the ACS
 
-Combining Census data with other types of data really unlocks its power for journalism. In this case, we'll use some 2019-20 data from Maryland high schools, including the number of graduates and the number of students who enrolled in college the next fall semester, plus the percentage. We also have the zip code of the high school, which will enable us to bring in Census data. Let's load the CSV file and make sure the zip code is a character column, because that's what we'll need to join.
+The ACS asks about more than income and population. It's one of the best sources for how many people have health insurance, and it breaks that down by age, income and more. Some of the most useful health variables are in the ACS "subject tables," which already contain percentages. Table S2701 covers health insurance coverage; the variable `S2701_C05_001` is the percentage of the population without health insurance. tidycensus knows to look in the subject tables when a variable name starts with "S":
 
 ```{r}
-md_high_schools <- read_csv("data/md_high_schools.csv") |>
+md_uninsured <- get_acs(geography = "county",
+              variables = c(pct_uninsured = "S2701_C05_001"),
+              state = "MD",
+              year = 2023)
+
+md_uninsured |> arrange(desc(estimate))
+```
+
+Look at the margins of error, which are in percentage points here. In smaller counties, the range of possible values can be wide enough that you shouldn't say one county has a higher uninsured rate than another unless the difference is larger than the margins of error.
+
+## Combining with Other Data
+
+Combining Census data with other types of data really unlocks its power for journalism. In this case, we'll use data from the federal Centers for Medicare & Medicaid Services on Maryland's 221 nursing homes, including the number of beds, who owns them, any fines they've paid and their overall rating on CMS's five-star scale, which is based on health inspections, staffing levels and measures of the quality of care. We also have the zip code of each nursing home, which will enable us to bring in Census data. Let's load the CSV file and make sure the zip code is a character column, because that's what we'll need to join.
+
+```{r}
+md_nursing_homes <- read_csv("data/md_nursing_homes.csv") |>
   mutate(zip = as.character(zip))
 ```
 
-The Census Bureau has Zip Code Tabulation Areas - they are mostly identical to what we know as zip codes, with some small differences. In most cases we can use them interchangeably. Let's get ZCTA household income data from the ACS using tidycensus for each zip code in `md_high_schools`. Run the following codeblock to retrieve household income data for all Maryland ZCTAs first, then join them to `md_high_schools` using the GEOID column. We'll also create min and max values and drop any rows where we don't have income estimates. What's one question we could ask of this data now that we have enrollment percentages and household income for the high school's zip code? What might make the answer harder to interpret?
+The Census Bureau has Zip Code Tabulation Areas - they are mostly identical to what we know as zip codes, with some small differences. In most cases we can use them interchangeably. Let's get ZCTA household income data from the ACS using tidycensus for each zip code in `md_nursing_homes`. Run the following codeblock to retrieve household income data for all Maryland ZCTAs first, then join them to `md_nursing_homes` using the GEOID column. We'll also create min and max values and drop any rows where we don't have income estimates. What's one question we could ask of this data now that we have ratings and household income for each nursing home's zip code? What might make the answer harder to interpret?
 
 ```{r}
 md_zipcodes <- get_acs(geography="zcta", variables = "B19013_001", state='MD', year=2019)
-md_high_schools_with_acs <- md_high_schools |> left_join(md_zipcodes, by=c('zip'='GEOID'))
-md_high_schools_with_acs <- md_high_schools_with_acs |> mutate(min=(estimate-moe), max=(estimate+moe)) |> drop_na()
+md_nursing_homes_with_acs <- md_nursing_homes |> left_join(md_zipcodes, by=c('zip'='GEOID'))
+md_nursing_homes_with_acs <- md_nursing_homes_with_acs |> mutate(min=(estimate-moe), max=(estimate+moe)) |> drop_na(estimate, overall_rating)
 ```
 
-Now let's look at the average household income for high schools that have 60% or more graduates immediately enrolling in college, and then look at those with less than 40%. What do you see here?
+Now let's look at the average household income in the zip codes of nursing homes with four- or five-star overall ratings, and then look at those with one or two stars. What do you see here?
 
 ```{r}
-md_high_schools_with_acs |>
-  filter(percent_of_high_school_graduates_enrolled >= 60) |> 
+md_nursing_homes_with_acs |>
+  filter(overall_rating >= 4) |> 
   summarize(avg_income = mean(estimate), count =n())
 
-md_high_schools_with_acs |>
-  filter(percent_of_high_school_graduates_enrolled <= 40) |> 
+md_nursing_homes_with_acs |>
+  filter(overall_rating <= 2) |> 
   summarize(avg_income = mean(estimate), count = n())
 ```
+
+Nursing homes with four- or five-star ratings are, on average, in zip codes where the median household income is about $15,000 higher than the zip codes of nursing homes with one or two stars. That's a finding worth reporting out -- but carefully. A nursing home's zip code isn't the same thing as where its residents come from, many residents pay through Medicaid regardless of where they live, and ownership matters, too: nonprofit nursing homes in Maryland have much higher average ratings than for-profit ones. The Census data gives you a lead, not a conclusion.

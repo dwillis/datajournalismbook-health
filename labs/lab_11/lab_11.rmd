@@ -1,7 +1,7 @@
 ---
 title: "lab_11"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -23,7 +23,7 @@ Let's get to scraping.
 
 ## Questions
 
-**Q1**. Scrape the listing of available Maryland physician disciplinary alerts at <https://www.mbp.state.md.us/disciplinary_2024.aspx> into a dataframe. You should have three columns, one of which is a date, so make sure the date column has a date datatype. What's the most common sanction, and how many times is it mentioned in the 2024 alerts?
+**Q1**. Scrape the listing of Maryland physician disciplinary alerts for 2025 at <https://www.mbp.state.md.us/disciplinary_2025.aspx> into a dataframe. You should have three columns, one of which is a date, so make sure the date column has a date datatype. Clean up the name column, too. What's the most common sanction, and how many times is it mentioned in the 2025 alerts? How does that compare to 2024, which you scraped in the pre_lab?
 
 **A1** 
 
@@ -31,9 +31,9 @@ Let's get to scraping.
 
 ```
 
-**Q2** Next, let's scrape the list of press releases from Maryland's Office of the Public Defender, <https://www.opd.state.md.us/press-releases>. This isn't a table, so you'll need to use `html_elements()` and your browser's inspector and do some clean up on the results. The result should be a dataframe with two columns that contain the date and title, and the date column should have a date datatype. The challenge here is figuring out how to isolate the releases.
+**Q2** Next, let's scrape the list of recent press releases from the Maryland Department of Health, <https://health.maryland.gov/newsroom/Pages/default.aspx>. The releases are laid out in a way that makes `html_table()` produce a mess, so you'll need to use `html_elements()` and your browser's inspector and do some clean up on the results. The result should be a dataframe with two columns that contain the date and title, and the date column should have a date datatype. The challenge here is figuring out how to isolate the releases: look for the `<tr>` tags and their classes.
 
-When you finish scraping into a dataframe, write code to find the press releases that have the word "police" in the title.
+When you finish scraping into a dataframe, write code to find the press releases that mention the governor in the title. What share of the department's recent releases is that? What does that tell you about these releases as a source of news about public health?
 
 **A2** 
 
@@ -41,15 +41,15 @@ When you finish scraping into a dataframe, write code to find the press releases
 
 ```
 
-**Q3** Sen. Chris Van Hollen, D-Maryland, has posted press releases at <https://www.vanhollen.senate.gov/news/press-releases>. It would be great to have them in a dataframe that has the following columns: date, title and url.
+**Q3** Go back to the physician disciplinary alerts page for 2025. Each name on that page is a link to a PDF of the board's order, but `html_table()` throws the links away. It would be great to have a dataframe that has the following columns: name, date and url.
 
-To do this, you will need to scrape the page's html and save that to a variable, and *then* extract the dates, titles and urls into separate dataframes using html_elements(). There are two different elements that contain the press release URL; pick one of them, and you may need to invoke an HTML `class` value to do it. The function `html_text()` pulls out the contents of a tag, but for urls we want the HTML attribute. Rvest gives you a way to extract the URL from a link; google to find out what it is. Remember how we turn a list into a dataframe.
+To do this, you will need to scrape the page's html and save that to a variable, and *then* extract the names, dates and urls into separate dataframes using html_elements(). The names and the links are inside the same element. The function `html_text()` pulls out the contents of a tag, but for urls we want the HTML attribute. Rvest gives you a way to extract the URL from a link; google to find out what it is. The links on the page are "relative" - they start with "/" - so you'll need to add the beginning of the address to make them full URLs. Remember how we turn a list into a dataframe.
 
 At the end, you'll have three dataframes that you want to combine into a single dataframe. When we want to combine the rows of identical dataframes, we used `bind_rows()`. If you were combining columns instead of rows, there's a similar function. Find out what it is and use it to put all of the dataframes together into a single one.
 
 When you're done, rename the columns so they make sense, then make sure the date column is an actual date.
 
-Finally, tell me what questions you could ask of this data if you had all of his press releases. Be creative.
+Finally, tell me what questions you could ask of this data if you had the text of every order. Be creative.
 
 **A3**
 

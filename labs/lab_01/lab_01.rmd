@@ -1,7 +1,7 @@
 ---
 title: "lab_01"
 author: "Derek Willis"
-date: "2025-01-16"
+date: "2026-11-17"
 output: html_document
 ---
 
@@ -29,34 +29,34 @@ library(tidyverse)
 
 ## Load Data
 
-We're going to load the UMD courses data.
+We're going to load the Maryland Medicare prescriber data: one row for each health care provider in each year from 2022 through 2024, with the number of prescriptions (claims) they wrote for Medicare patients and what those drugs cost.
 
 **Task** Run the codeblock below to load the data, which is contained in an RDS file.
 
 ```{r}
-umd_courses <- read_rds("lab_01.rds")
+md_prescribers <- read_rds("data/md_partd_prescribers.rds")
 ```
 
 ## Answer questions
 
-**Q1** Which department has the highest mean (average) number of seats for its classes? You need to show the department with the highest average first. Which one is the most surprising/interesting to you? **A1**
+**Q1** Which specialty has the highest mean (average) total drug cost per prescriber? You need to show the specialty with the highest average first. Look at the number of prescribers in that specialty, too. Which result is the most surprising/interesting to you, and why might some specialties have such expensive prescriptions? **A1**
 
 ```{r}
 ```
 
-**Q2** Find out the greatest number of times any individual class has been offered in our dataset. Your code must show the greatest number of classes first.
+**Q2** Find the ZIP code that appears the most times in our dataset. Your code must show the ZIP code with the most rows first. Look up that ZIP code: what's located there that might explain the result?
 **A2**
 
 ```{r}
 ```
 
-**Q3** Count the number of courses for each instructor and department. Which instructor has taught the most?
+**Q3** Count the number of rows for each prescriber -- using their last name, first name and specialty -- and show the prescriber with the most rows first. Which prescriber appears the most?
 **A3**
 
 ```{r}
 ```
 
-**Q4** Given the results for Q3, what would have made it easier to find the answer? You don't have to know *how* to accomplish this; I want you to describe in words what would make the answer easier to see. How confident are you that the answer you got is the right one, and why? **A4**
+**Q4** Given the results for Q3, how confident are you that the answer you got is the right one, and why? (Hint: how many years of data are there?) Look at the columns in the data: what would have been a better way to count individual prescribers? You don't have to write the code; describe in words what you would do. **A4**
 
 **Q5** Take one of the questions you listed in the final question of the pre_lab and try to answer it here in code. If you don't know how to fully answer it, write what code you can and describe in words what else you would need to do. If you got an answer, is it interesting? **A5**
 
